@@ -7,4 +7,4 @@ export type SubscriptionItem = {
   status: SubscriptionStatus; risk_type: string; confidence: number; evidence: string; needs_user_confirmation: boolean;
   cancel_url?: string | null; fallback_search_url?: string | null; support_email?: string | null; guide_steps: string[]; risk_note?: string | null;
 };
-export type AnalyzeResponse = { items: SubscriptionItem[] };
+export type AnalyzeResponse = { items: SubscriptionItem[]; run_id?: string | null };

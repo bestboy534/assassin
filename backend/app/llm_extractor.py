@@ -1,10 +1,10 @@
 import json, logging
-from openai import OpenAI
 from pydantic import ValidationError
 from .config import get_settings
 from .privacy import redact_sensitive_text
 from .schemas import ExtractedSubscriptionsPayload
 from .heuristic_extractor import extract_with_heuristics
+from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """
@@ -26,7 +26,21 @@ def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubs
     safe_text = redact_sensitive_text(raw_text)
     if not settings.use_llm or not settings.openai_api_key:
         return ExtractedSubscriptionsPayload(items=extract_with_heuristics(safe_text, source_hint))
-    client = OpenAI(api_key=settings.openai_api_key)
+    try:
+        from openai import OpenAI
+    except ImportError:
+        logger.warning("openai package not installed, fallback to heuristic extractor")
+        return ExtractedSubscriptionsPayload(items=extract_with_heuristics(safe_text, source_hint))
+
+    client_kwargs = {
+        "api_key": settings.openai_api_key,
+    }
+
+    if settings.openai_base_url:
+        client_kwargs["base_url"] = settings.openai_base_url
+
+    client = OpenAI(**client_kwargs)
+
     user_prompt = f"source_hint: {source_hint}\n\n待分析文本：\n{safe_text}"
     last_error = None
     for attempt in range(3):

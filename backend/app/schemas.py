@@ -54,6 +54,21 @@ class SubscriptionItem(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     items: list[SubscriptionItem]
+    run_id: str | None = None
+
+class HistoryRun(BaseModel):
+    id: str
+    created_at: str
+    source_hint: SourceType
+    items_count: int
+
+class HistoryListResponse(BaseModel):
+    items: list[HistoryRun]
+
+class HistoryDetailResponse(BaseModel):
+    run: HistoryRun
+    items: list[SubscriptionItem]
 
 class HealthResponse(BaseModel):
     status: str = "ok"
+    database: str | None = None
