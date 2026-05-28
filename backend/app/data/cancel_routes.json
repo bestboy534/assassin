@@ -1,0 +1,102 @@
+{
+  "chatgpt": {
+    "software_name": "ChatGPT",
+    "vendor": "OpenAI",
+    "aliases": ["ChatGPT Plus", "OpenAI ChatGPT", "OPENAI *CHATGPT", "CHATGPT SUBSCRIP"],
+    "primary_cancel_url": "https://chatgpt.com/",
+    "fallback_account_url": "https://chatgpt.com/",
+    "support_email": null,
+    "guide_steps": ["打开 ChatGPT", "点击左下角头像或右上角个人菜单", "进入 Settings", "找到 Plan / Billing / Subscription", "点击 Manage subscription", "选择 Cancel plan"],
+    "risk_note": "如果页面显示 Free Plan，可能是当前登录账号不是扣费账号，或者订阅来自 Apple / Google Play。"
+  },
+  "claude": {
+    "software_name": "Claude",
+    "vendor": "Anthropic",
+    "aliases": ["Claude Pro", "ANTHROPIC PBC", "Anthropic"],
+    "primary_cancel_url": "https://claude.ai/settings/billing",
+    "fallback_account_url": "https://claude.ai/settings",
+    "support_email": null,
+    "guide_steps": ["打开 Claude", "进入 Settings", "进入 Billing 或 Plan", "找到 Manage subscription", "选择 Cancel"],
+    "risk_note": "如果显示 Free Plan，可能是登录了错误账号，或者通过 Apple 订阅。"
+  },
+  "midjourney": {
+    "software_name": "Midjourney",
+    "vendor": "Midjourney",
+    "aliases": ["MIDJOURNEY INC"],
+    "primary_cancel_url": "https://www.midjourney.com/account",
+    "fallback_account_url": "https://www.midjourney.com/account",
+    "support_email": null,
+    "guide_steps": ["打开 Midjourney Account 页面", "找到 Manage Sub", "选择 Cancel Plan"],
+    "risk_note": "如果无法访问，请确认当前浏览器已登录扣费账号。"
+  },
+  "github copilot": {
+    "software_name": "GitHub Copilot",
+    "vendor": "GitHub",
+    "aliases": ["GITHUB COPILOT", "Copilot"],
+    "primary_cancel_url": "https://github.com/settings/billing",
+    "fallback_account_url": "https://github.com/settings/billing",
+    "support_email": null,
+    "guide_steps": ["打开 GitHub Billing", "进入 Plans and usage", "找到 Copilot", "取消订阅"],
+    "risk_note": "GitHub 账单可能包含 Sponsors、Actions、Packages 等，请先确认是否 Copilot。"
+  },
+  "cursor": {
+    "software_name": "Cursor",
+    "vendor": "Anysphere",
+    "aliases": ["CURSOR"],
+    "primary_cancel_url": "https://cursor.com/settings",
+    "fallback_account_url": "https://cursor.com/settings",
+    "support_email": null,
+    "guide_steps": ["打开 Cursor 设置页", "进入 Billing", "管理订阅并取消"],
+    "risk_note": "如果使用团队版，请确认是否需要管理员权限。"
+  },
+  "canva": {
+    "software_name": "Canva",
+    "vendor": "Canva",
+    "aliases": ["CANVA"],
+    "primary_cancel_url": "https://www.canva.com/settings/billing-and-plans/",
+    "fallback_account_url": "https://www.canva.com/settings/",
+    "support_email": null,
+    "guide_steps": ["打开 Canva 设置", "进入 Billing & plans", "找到当前计划", "取消试用或订阅"],
+    "risk_note": "Canva 可能由 Apple / Google Play 代扣。"
+  },
+  "notion": {
+    "software_name": "Notion",
+    "vendor": "Notion",
+    "aliases": ["NOTION"],
+    "primary_cancel_url": "https://www.notion.so/settings/billing",
+    "fallback_account_url": "https://www.notion.so/settings",
+    "support_email": null,
+    "guide_steps": ["打开 Notion 设置", "进入 Billing", "降级或取消付费计划"],
+    "risk_note": "团队空间可能需要 workspace owner 操作。"
+  },
+  "gamma": {
+    "software_name": "Gamma",
+    "vendor": "Gamma",
+    "aliases": ["GAMMA"],
+    "primary_cancel_url": "https://gamma.app/settings",
+    "fallback_account_url": "https://gamma.app/settings",
+    "support_email": null,
+    "guide_steps": ["打开 Gamma 设置", "进入 Billing", "取消 Pro 计划"],
+    "risk_note": "如果没有看到 Billing，请确认登录账号。"
+  },
+  "runway": {
+    "software_name": "Runway",
+    "vendor": "Runway",
+    "aliases": ["RUNWAY"],
+    "primary_cancel_url": "https://app.runwayml.com/account",
+    "fallback_account_url": "https://app.runwayml.com/account",
+    "support_email": null,
+    "guide_steps": ["打开 Runway Account", "进入 Billing", "管理并取消订阅"],
+    "risk_note": "如果是团队计划，请确认权限。"
+  },
+  "perplexity": {
+    "software_name": "Perplexity",
+    "vendor": "Perplexity",
+    "aliases": ["PERPLEXITY"],
+    "primary_cancel_url": "https://www.perplexity.ai/settings/account",
+    "fallback_account_url": "https://www.perplexity.ai/settings",
+    "support_email": null,
+    "guide_steps": ["打开 Perplexity 设置", "进入 Account / Subscription", "取消 Pro"],
+    "risk_note": "如果是 App Store 订阅，请从 Apple 订阅管理取消。"
+  }
+}

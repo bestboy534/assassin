@@ -1,0 +1,7 @@
+Transaction Date,Post Date,Description,Amount,Currency,Category,Status
+2026-05-01,2026-05-02,OPENAI *CHATGPT SUBSCRIP,20.00,USD,Software,Cleared
+2026-05-03,2026-05-04,ANTHROPIC PBC,20.00,USD,Technology,Cleared
+2026-05-05,2026-05-05,GITHUB COPILOT,10.00,USD,Software,Cleared
+2026-05-08,2026-05-09,MIDJOURNEY INC,30.00,USD,Software,Cleared
+2026-05-12,2026-05-13,OPENAI *API,14.52,USD,Software,Cleared
+2026-05-15,2026-05-16,APPLE.COM/BILL,680,TWD,Software,Cleared

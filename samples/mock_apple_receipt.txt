@@ -1,0 +1,8 @@
+Apple Invoice
+Date: May 15, 2026
+App Store
+ChatGPT - AI Chat (Monthly Subscription) ... $20.00
+Renewing Jun 15, 2026
+iCloud+ with 2TB of Storage (Monthly) ... $9.99
+Total: $29.99
+Payment Method: Apple Pay (Visa ending in 8888)
