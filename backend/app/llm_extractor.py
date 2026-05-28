@@ -1,10 +1,13 @@
 import json, logging
+import re
 from pydantic import ValidationError
 from .config import get_settings
 from .privacy import redact_sensitive_text
 from .schemas import ExtractedSubscriptionsPayload
 from .heuristic_extractor import extract_with_heuristics
 from openai import OpenAI
+from typing import Any
+
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """
@@ -20,6 +23,176 @@ SYSTEM_PROMPT = """
 
 def _schema_for_openai() -> dict:
     return ExtractedSubscriptionsPayload.model_json_schema()
+
+def extract_json_form_text(text: str) -> Any:
+    """
+    兼容模型返回:
+    1. '''json...
+    2. {"items":[...]}
+    3. [...]
+    """
+    cleaned =text.strip()
+
+    if cleaned.startswith("'''"):
+        cleaned = re.sub(r"^```(?:json)?", "", cleaned, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r"'''$", "", cleaned).strip()
+    
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    #兜底：从文本中提取第一个json作为数组或者对象
+    array_match = re.search(r"\[[\s\S]*\]", cleaned)
+    if array_match:
+        return json.loads(array_match.group(0))
+
+    object_match = re.search(r"\{[\s\S]*\}", cleaned)
+    if object_match:
+        return json.loads(object_match.group(0))
+
+    raise ValueError("LLM response is not valid JSON")
+
+def normalize_llm_item(raw: dict, default_source_hint: str = "unknown") -> dict:
+    """
+    把 MIMO 可能返回的不标准字段清洗成 Pydantic 能接收的结构。
+    """
+    item = dict(raw)
+
+    # amount: "$20.00" -> 20.0
+    amount = item.get("amount", 0)
+    if isinstance(amount, str):
+        amount = amount.replace("$", "").replace(",", "").strip()
+        try:
+            item["amount"] = float(amount)
+        except ValueError:
+            item["amount"] = 0.0
+
+    # confidence: "90%" -> 0.9
+    confidence = item.get("confidence", 0.7)
+    if isinstance(confidence, str):
+        confidence = confidence.replace("%", "").strip()
+        try:
+            confidence = float(confidence)
+            if confidence > 1:
+                confidence = confidence / 100
+        except ValueError:
+            confidence = 0.7
+    item["confidence"] = max(0.0, min(float(confidence), 1.0))
+
+    # billing_cycle 映射
+    cycle_map = {
+        "month": "monthly",
+        "monthly": "monthly",
+        "月": "monthly",
+        "月付": "monthly",
+        "每月": "monthly",
+        "year": "yearly",
+        "yearly": "yearly",
+        "annual": "yearly",
+        "annually": "yearly",
+        "年": "yearly",
+        "年付": "yearly",
+        "每年": "yearly",
+        "week": "weekly",
+        "weekly": "weekly",
+        "周": "weekly",
+        "quarter": "quarterly",
+        "quarterly": "quarterly",
+        "季": "quarterly",
+        "unknown": "unknown",
+    }
+    cycle = str(item.get("billing_cycle", "unknown")).lower().strip()
+    item["billing_cycle"] = cycle_map.get(cycle, "unknown")
+
+    # source_type 映射
+    source_map = {
+        "csv": "csv",
+        "credit_card_csv": "csv",
+        "credit_card": "csv",
+        "bank_csv": "csv",
+        "apple": "apple_mail",
+        "apple_mail": "apple_mail",
+        "stripe": "stripe_mail",
+        "stripe_mail": "stripe_mail",
+        "paypal": "paypal_mail",
+        "paypal_mail": "paypal_mail",
+        "google": "google_play",
+        "google_play": "google_play",
+        "unknown": "unknown",
+    }
+    source = str(item.get("source_type") or default_source_hint or "unknown").lower().strip()
+    item["source_type"] = source_map.get(source, "unknown")
+
+    # risk_type 映射
+    risk_map = {
+        "idle": "possible_idle",
+        "possible_idle": "possible_idle",
+        "duplicate": "possible_duplicate",
+        "possible_duplicate": "possible_duplicate",
+        "hidden": "hidden_fee",
+        "hidden_fee": "hidden_fee",
+        "api": "api_usage",
+        "api_usage": "api_usage",
+        "apple": "apple_unresolved",
+        "apple_unresolved": "apple_unresolved",
+        "none": "none",
+        "unknown": "none",
+    }
+    risk = str(item.get("risk_type", "none")).lower().strip()
+    item["risk_type"] = risk_map.get(risk, "none")
+
+    # currency 标准化
+    currency = str(item.get("currency", "USD")).upper().strip()
+    currency_alias = {
+        "美元": "USD",
+        "美金": "USD",
+        "$": "USD",
+        "人民币": "CNY",
+        "元": "CNY",
+        "台币": "TWD",
+        "新台币": "TWD",
+        "港币": "HKD",
+    }
+    item["currency"] = currency_alias.get(currency, currency)
+
+    # 字段兜底
+    item["software_name"] = item.get("software_name") or item.get("name") or item.get("software") or "Unknown SaaS"
+    item["merchant_name"] = item.get("merchant_name") or item.get("merchant") or item.get("vendor")
+    item["transaction_date"] = item.get("transaction_date") or item.get("date")
+    item["evidence"] = item.get("evidence") or "LLM extracted from billing text."
+    item["needs_user_confirmation"] = bool(item.get("needs_user_confirmation", True))
+
+    return item
+
+
+def normalize_llm_payload(payload: Any, default_source_hint: str = "unknown") -> list[dict]:
+    """
+    兼容：
+    1. [...]
+    2. {"items": [...]}
+    3. {"subscriptions": [...]}
+    4. {"data": [...]}
+    """
+    if isinstance(payload, dict):
+        if isinstance(payload.get("items"), list):
+            raw_items = payload["items"]
+        elif isinstance(payload.get("subscriptions"), list):
+            raw_items = payload["subscriptions"]
+        elif isinstance(payload.get("data"), list):
+            raw_items = payload["data"]
+        else:
+            raw_items = [payload]
+    elif isinstance(payload, list):
+        raw_items = payload
+    else:
+        raw_items = []
+
+    return [
+        normalize_llm_item(x, default_source_hint=default_source_hint)
+        for x in raw_items
+        if isinstance(x, dict)
+    ]
 
 def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubscriptionsPayload:
     settings = get_settings()
@@ -55,6 +228,11 @@ def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubs
             return ExtractedSubscriptionsPayload.model_validate(json.loads(content))
         except (json.JSONDecodeError, ValidationError, Exception) as exc:
             last_error = exc
-            logger.warning("LLM extraction failed attempt=%s error=%s", attempt + 1, type(exc).__name__)
+            logger.warning(
+                "LLM extraction failed attempt=%s error=%s",
+                attempt,
+                type(exc).__name__,
+                str(exc)[:2000],
+            )
     logger.error("LLM failed after retries, fallback heuristic: %s", last_error)
     return ExtractedSubscriptionsPayload(items=extract_with_heuristics(safe_text, source_hint))
