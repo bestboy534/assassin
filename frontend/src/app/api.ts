@@ -17,6 +17,18 @@ export type AuthSession = {
   organizations: OrganizationSummary[];
 };
 
+export type ApplicationItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  category: string;
+  status: string;
+  business_owner: string | null;
+  technical_owner: string | null;
+  risk_level: string;
+  approved: boolean;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -69,4 +81,26 @@ export function getCurrentSession() {
 
 export function logoutAccount() {
   return request<{ status: string }>("/api/v1/auth/logout", { method: "POST" });
+}
+
+export function listApplications(organizationId: string) {
+  return request<{ items: ApplicationItem[] }>(
+    `/api/v1/organizations/${organizationId}/applications`,
+  );
+}
+
+export function createApplication(
+  organizationId: string,
+  input: {
+    name: string;
+    category: string;
+    business_owner: string | null;
+    technical_owner: string | null;
+    approved: boolean;
+  },
+) {
+  return request<ApplicationItem>(`/api/v1/organizations/${organizationId}/applications`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
