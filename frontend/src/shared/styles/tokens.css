@@ -1,0 +1,16 @@
+:root {
+  --color-ink: #171b46;
+  --color-brand: #3f469e;
+  --color-brand-dark: #20245f;
+  --color-accent: #2ecad3;
+  --color-accent-soft: #cafbff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6fafb;
+  --color-muted: #687488;
+  --color-border: #dfe7ed;
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --shadow-panel: 0 18px 55px rgb(15 23 42 / 8%);
+  --content-wide: 1280px;
+  --content-reading: 820px;
+}

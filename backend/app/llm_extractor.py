@@ -1,12 +1,14 @@
-import json, logging
+import json
+import logging
 import re
-from pydantic import ValidationError
-from .config import get_settings
-from .privacy import redact_sensitive_text
-from .schemas import ExtractedSubscriptionsPayload
-from .heuristic_extractor import extract_with_heuristics
-from openai import OpenAI
 from typing import Any
+
+from pydantic import ValidationError
+
+from .config import get_settings
+from .heuristic_extractor import extract_with_heuristics
+from .privacy import redact_sensitive_text
+from .schemas import ExtractedSubscriptionsPayload, SourceType
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +49,10 @@ risk_type 只能是 possible_idle, possible_duplicate, hidden_fee, api_usage, ap
 5. confidence 必须是 0 到 1 的小数。
 """
 
-def _schema_for_openai() -> dict:
+
+def _schema_for_openai() -> dict[str, Any]:
     return ExtractedSubscriptionsPayload.model_json_schema()
+
 
 def extract_json_form_text(text: str) -> Any:
     """
@@ -57,18 +61,18 @@ def extract_json_form_text(text: str) -> Any:
     2. {"items":[...]}
     3. [...]
     """
-    cleaned =text.strip()
+    cleaned = text.strip()
 
     if cleaned.startswith("'''"):
         cleaned = re.sub(r"^```(?:json)?", "", cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r"'''$", "", cleaned).strip()
-    
+
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
 
-    #兜底：从文本中提取第一个json作为数组或者对象
+    # 兜底：从文本中提取第一个json作为数组或者对象
     array_match = re.search(r"\[[\s\S]*\]", cleaned)
     if array_match:
         return json.loads(array_match.group(0))
@@ -79,7 +83,11 @@ def extract_json_form_text(text: str) -> Any:
 
     raise ValueError("LLM response is not valid JSON")
 
-def normalize_llm_item(raw: dict, default_source_hint: str = "unknown") -> dict:
+
+def normalize_llm_item(
+    raw: dict[str, Any],
+    default_source_hint: SourceType = "unknown",
+) -> dict[str, Any]:
     """
     把 MIMO 可能返回的不标准字段清洗成 Pydantic 能接收的结构。
     """
@@ -183,7 +191,9 @@ def normalize_llm_item(raw: dict, default_source_hint: str = "unknown") -> dict:
     item["currency"] = currency_alias.get(currency, currency)
 
     # 字段兜底
-    item["software_name"] = item.get("software_name") or item.get("name") or item.get("software") or "Unknown SaaS"
+    item["software_name"] = (
+        item.get("software_name") or item.get("name") or item.get("software") or "Unknown SaaS"
+    )
     item["merchant_name"] = item.get("merchant_name") or item.get("merchant") or item.get("vendor")
     item["transaction_date"] = item.get("transaction_date") or item.get("date")
     item["evidence"] = item.get("evidence") or "LLM extracted from billing text."
@@ -192,7 +202,10 @@ def normalize_llm_item(raw: dict, default_source_hint: str = "unknown") -> dict:
     return item
 
 
-def normalize_llm_payload(payload: Any, default_source_hint: str = "unknown") -> list[dict]:
+def normalize_llm_payload(
+    payload: Any,
+    default_source_hint: SourceType = "unknown",
+) -> list[dict[str, Any]]:
     """
     兼容：
     1. [...]
@@ -220,10 +233,15 @@ def normalize_llm_payload(payload: Any, default_source_hint: str = "unknown") ->
         if isinstance(x, dict)
     ]
 
-def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubscriptionsPayload:
+
+def extract_subscriptions(
+    raw_text: str,
+    source_hint: SourceType = "unknown",
+) -> ExtractedSubscriptionsPayload:
     settings = get_settings()
     safe_text = redact_sensitive_text(raw_text)
-    if not settings.use_llm or not settings.openai_api_key:
+    api_key = settings.openai_api_key.get_secret_value()
+    if not settings.use_llm or not api_key:
         return ExtractedSubscriptionsPayload(items=extract_with_heuristics(safe_text, source_hint))
     try:
         from openai import OpenAI
@@ -232,7 +250,7 @@ def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubs
         return ExtractedSubscriptionsPayload(items=extract_with_heuristics(safe_text, source_hint))
 
     client_kwargs = {
-        "api_key": settings.openai_api_key,
+        "api_key": api_key,
     }
 
     if settings.openai_base_url:
@@ -246,9 +264,19 @@ def extract_subscriptions(raw_text: str, source_hint="unknown") -> ExtractedSubs
         try:
             response = client.chat.completions.create(
                 model=settings.model_name,
-                messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":user_prompt}],
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
                 temperature=0,
-                response_format={"type":"json_schema","json_schema":{"name":"subscription_extraction","schema":_schema_for_openai(),"strict":True}},
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "subscription_extraction",
+                        "schema": _schema_for_openai(),
+                        "strict": True,
+                    },
+                },
             )
             content = response.choices[0].message.content or "{}"
             return ExtractedSubscriptionsPayload.model_validate(json.loads(content))
