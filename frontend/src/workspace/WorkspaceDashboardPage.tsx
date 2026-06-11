@@ -30,6 +30,7 @@ import {
   submitPurchaseRequest,
 } from "../app/api";
 import type { SourceHint, SubscriptionItem } from "../types";
+import { ContractRenewalSection } from "./ContractRenewalSection";
 
 const dashboardCards = [
   ["应用总数", "连接身份目录后自动统计", BarChart3],
@@ -221,6 +222,14 @@ export function WorkspaceSectionPage() {
         currentOrganization={workspace.currentOrganization}
       >
         <ProcurementSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "contracts") {
+    return (
+      <WorkspaceShell activeSection="contracts" currentOrganization={workspace.currentOrganization}>
+        <ContractRenewalSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }

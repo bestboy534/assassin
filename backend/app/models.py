@@ -2,6 +2,7 @@
 
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
+from .domains.contracts.models import Contract, ContractVersion, Renewal
 from .domains.files.models import StoredFile
 from .domains.identity.models import User, UserSession
 from .domains.jobs.models import Job
@@ -16,12 +17,15 @@ __all__ = [
     "ApplicationSource",
     "ApprovalDecision",
     "ApprovalTask",
+    "Contract",
+    "ContractVersion",
     "InboxReceipt",
     "Job",
     "Organization",
     "OrganizationMember",
     "OutboxEvent",
     "PurchaseRequest",
+    "Renewal",
     "StoredFile",
     "User",
     "UserSession",

@@ -71,6 +71,54 @@ export type ApprovalTaskItem = {
   created_at: string;
 };
 
+export type ContractItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  vendor_name: string;
+  application_name: string | null;
+  owner_name: string;
+  status: string;
+  current_version_id: string | null;
+  created_at: string;
+};
+
+export type ContractVersionItem = {
+  id: string;
+  organization_id: string;
+  contract_id: string;
+  version_number: number;
+  status: string;
+  start_date: string;
+  end_date: string;
+  amount: number;
+  currency: string;
+  billing_frequency: string;
+  auto_renew: boolean;
+  notice_period_days: number;
+  signed_at: string | null;
+};
+
+export type RenewalItem = {
+  id: string;
+  organization_id: string;
+  contract_id: string;
+  source_version_id: string;
+  renewal_date: string;
+  decision_deadline: string;
+  owner_name: string;
+  status: string;
+  decision: string | null;
+  current_amount: number;
+  currency: string;
+};
+
+export type ContractBundle = {
+  contract: ContractItem;
+  version: ContractVersionItem;
+  renewal: RenewalItem | null;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -220,5 +268,50 @@ export function approveApprovalTask(
       },
       body: JSON.stringify({ comment }),
     },
+  );
+}
+
+export function listContracts(organizationId: string) {
+  return request<{ items: ContractItem[] }>(
+    `/api/v1/organizations/${organizationId}/contracts`,
+  );
+}
+
+export function listRenewals(organizationId: string) {
+  return request<{ items: RenewalItem[] }>(
+    `/api/v1/organizations/${organizationId}/renewals`,
+  );
+}
+
+export function createContract(
+  organizationId: string,
+  input: {
+    name: string;
+    vendor_name: string;
+    application_name: string | null;
+    owner_name: string;
+    start_date: string;
+    end_date: string;
+    amount: number;
+    currency: string;
+    billing_frequency: string;
+    auto_renew: boolean;
+    notice_period_days: number;
+  },
+) {
+  return request<ContractBundle>(`/api/v1/organizations/${organizationId}/contracts`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function markContractVersionSigned(
+  organizationId: string,
+  contractId: string,
+  versionId: string,
+) {
+  return request<ContractBundle>(
+    `/api/v1/organizations/${organizationId}/contracts/${contractId}/versions/${versionId}/mark-signed`,
+    { method: "POST" },
   );
 }

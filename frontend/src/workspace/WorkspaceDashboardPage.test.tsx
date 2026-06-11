@@ -61,12 +61,38 @@ let approvalTasks: Array<{
   status: string;
   created_at: string;
 }>;
+let contracts: Array<{
+  id: string;
+  organization_id: string;
+  name: string;
+  vendor_name: string;
+  application_name: string | null;
+  owner_name: string;
+  status: string;
+  current_version_id: string | null;
+  created_at: string;
+}>;
+let renewals: Array<{
+  id: string;
+  organization_id: string;
+  contract_id: string;
+  source_version_id: string;
+  renewal_date: string;
+  decision_deadline: string;
+  owner_name: string;
+  status: string;
+  decision: string | null;
+  current_amount: number;
+  currency: string;
+}>;
 
 beforeEach(() => {
   applicationItems = [];
   auditRuns = [];
   purchaseRequests = [];
   approvalTasks = [];
+  contracts = [];
+  renewals = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -205,6 +231,86 @@ beforeEach(() => {
         { status: 200 },
       );
     }
+    if (url.endsWith("/api/v1/organizations/org-1/contracts") && method === "GET") {
+      return Response.json({ items: contracts });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/renewals") && method === "GET") {
+      return Response.json({ items: renewals });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/contracts") && method === "POST") {
+      const body = JSON.parse(String(init?.body));
+      const contract = {
+        id: "contract-created",
+        organization_id: "org-1",
+        name: body.name,
+        vendor_name: body.vendor_name,
+        application_name: body.application_name,
+        owner_name: body.owner_name,
+        status: "draft",
+        current_version_id: "version-created",
+        created_at: "2026-06-11T10:10:00Z",
+      };
+      const version = {
+        id: "version-created",
+        organization_id: "org-1",
+        contract_id: "contract-created",
+        version_number: 1,
+        status: "draft",
+        start_date: body.start_date,
+        end_date: body.end_date,
+        amount: body.amount,
+        currency: body.currency,
+        billing_frequency: body.billing_frequency,
+        auto_renew: body.auto_renew,
+        notice_period_days: body.notice_period_days,
+        signed_at: null,
+      };
+      contracts = [contract, ...contracts];
+      return Response.json({ contract, version, renewal: null }, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/contracts/contract-created/versions/version-created/mark-signed",
+      ) &&
+      method === "POST"
+    ) {
+      const contract = {
+        ...contracts.find(item => item.id === "contract-created")!,
+        status: "active",
+        current_version_id: "version-created",
+      };
+      contracts = [contract, ...contracts.filter(item => item.id !== contract.id)];
+      const version = {
+        id: "version-created",
+        organization_id: "org-1",
+        contract_id: "contract-created",
+        version_number: 1,
+        status: "signed",
+        start_date: "2026-02-01",
+        end_date: "2027-01-31",
+        amount: 12000,
+        currency: "USD",
+        billing_frequency: "yearly",
+        auto_renew: true,
+        notice_period_days: 60,
+        signed_at: "2026-06-11T10:11:00Z",
+      };
+      const renewal = {
+        id: "renewal-created",
+        organization_id: "org-1",
+        contract_id: "contract-created",
+        source_version_id: "version-created",
+        renewal_date: "2027-01-31",
+        decision_deadline: "2026-12-02",
+        owner_name: "运营负责人",
+        status: "upcoming",
+        decision: null,
+        current_amount: 12000,
+        currency: "USD",
+      };
+      renewals = [renewal, ...renewals];
+      return Response.json({ contract, version, renewal });
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -319,4 +425,31 @@ test("renders procurement approvals and processes a request", async () => {
   await user.click(screen.getByRole("button", { name: "批准" }));
 
   expect((await screen.findAllByText("已批准")).length).toBeGreaterThanOrEqual(2);
+});
+
+test("creates and signs a contract with a renewal deadline", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/contracts"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "合同续订" })).toBeVisible();
+  await user.type(screen.getByLabelText("合同名称"), "Notion 企业版 2026");
+  await user.type(screen.getByLabelText("供应商"), "Notion Labs");
+  await user.type(screen.getByLabelText("关联应用"), "Notion");
+  await user.type(screen.getByLabelText("负责人"), "运营负责人");
+  await user.type(screen.getByLabelText("开始日期"), "2026-02-01");
+  await user.type(screen.getByLabelText("结束日期"), "2027-01-31");
+  await user.type(screen.getByLabelText("合同金额"), "12000");
+  await user.click(screen.getByLabelText("自动续订"));
+  await user.clear(screen.getByLabelText("通知期（天）"));
+  await user.type(screen.getByLabelText("通知期（天）"), "60");
+  await user.click(screen.getByRole("button", { name: "保存合同" }));
+
+  expect(await screen.findByText("Notion 企业版 2026")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "标记已签署" }));
+
+  expect(await screen.findByText("2026-12-02")).toBeVisible();
+  expect(screen.getByText("2027-01-31")).toBeVisible();
 });
