@@ -30,6 +30,7 @@ import {
   submitPurchaseRequest,
 } from "../app/api";
 import type { SourceHint, SubscriptionItem } from "../types";
+import { BudgetTransactionSection } from "./BudgetTransactionSection";
 import { ContractRenewalSection } from "./ContractRenewalSection";
 import { VendorRiskSection } from "./VendorRiskSection";
 
@@ -47,6 +48,7 @@ const workspaceNav = [
   ["供应商风险", "vendors"],
   ["合同续订", "contracts"],
   ["预算交易", "spend"],
+  ["账单审计", "audit"],
   ["报表", "reports"],
 ] as const;
 
@@ -247,6 +249,14 @@ export function WorkspaceSectionPage() {
   if (section === "spend") {
     return (
       <WorkspaceShell activeSection="spend" currentOrganization={workspace.currentOrganization}>
+        <BudgetTransactionSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "audit") {
+    return (
+      <WorkspaceShell activeSection="audit" currentOrganization={workspace.currentOrganization}>
         <BillingAuditSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );

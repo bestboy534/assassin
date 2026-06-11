@@ -9,15 +9,26 @@ from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
 from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
+from .domains.spend.models import (
+    AccountingPeriod,
+    Budget,
+    BudgetCommitment,
+    SpendTransaction,
+    TransactionAnomaly,
+    TransactionSplit,
+)
 from .domains.vendors.models import RiskFinding, Vendor, VendorAlias, VendorRiskAssessment
 
 __all__ = [
     "AnalysisItem",
     "AnalysisRun",
+    "AccountingPeriod",
     "Application",
     "ApplicationSource",
     "ApprovalDecision",
     "ApprovalTask",
+    "Budget",
+    "BudgetCommitment",
     "Contract",
     "ContractVersion",
     "InboxReceipt",
@@ -29,6 +40,9 @@ __all__ = [
     "RiskFinding",
     "Renewal",
     "StoredFile",
+    "SpendTransaction",
+    "TransactionAnomaly",
+    "TransactionSplit",
     "User",
     "UserSession",
     "Vendor",

@@ -171,6 +171,81 @@ export type VendorAssessmentBundle = {
   findings: RiskFindingItem[];
 };
 
+export type BudgetItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  fiscal_year: number;
+  department: string;
+  amount: string;
+  currency: string;
+  status: string;
+  created_at: string;
+};
+
+export type BudgetSummaryItem = {
+  budget_id: string;
+  currency: string;
+  allocated: string;
+  actual: string;
+  committed: string;
+  forecast: string;
+  remaining: string;
+};
+
+export type TransactionSplitItem = {
+  id: string;
+  amount: string;
+  department: string;
+  category: string;
+};
+
+export type SpendTransactionItem = {
+  id: string;
+  organization_id: string;
+  source_provider: string;
+  source_account_id: string;
+  external_id: string;
+  transaction_date: string;
+  merchant_name: string;
+  description: string;
+  amount: string;
+  currency: string;
+  department: string;
+  category: string | null;
+  application_id: string | null;
+  match_confidence: string;
+  splits: TransactionSplitItem[];
+};
+
+export type TransactionAnomalyItem = {
+  id: string;
+  transaction_id: string;
+  budget_id: string | null;
+  code: string;
+  rule_version: string;
+  baseline_amount: string;
+  observed_amount: string;
+  status: string;
+  evidence: string;
+};
+
+export type AccountingPeriodItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  locked_at: string | null;
+};
+
+export type ImportTransactionsResponse = {
+  created_count: number;
+  existing_count: number;
+  items: SpendTransactionItem[];
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -445,5 +520,159 @@ export function acceptRiskFinding(
       method: "POST",
       body: JSON.stringify(input),
     },
+  );
+}
+
+export function listBudgets(organizationId: string) {
+  return request<{ items: BudgetItem[] }>(
+    `/api/v1/organizations/${organizationId}/budgets`,
+  );
+}
+
+export function createBudget(
+  organizationId: string,
+  input: {
+    name: string;
+    fiscal_year: number;
+    department: string;
+    amount: string;
+    currency: string;
+  },
+) {
+  return request<BudgetItem>(`/api/v1/organizations/${organizationId}/budgets`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createBudgetCommitment(
+  organizationId: string,
+  budgetId: string,
+  input: {
+    commitment_type: "committed" | "forecast";
+    amount: string;
+    description: string;
+  },
+) {
+  return request<{
+    id: string;
+    budget_id: string;
+    commitment_type: string;
+    amount: string;
+    description: string;
+  }>(`/api/v1/organizations/${organizationId}/budgets/${budgetId}/commitments`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getBudgetSummary(organizationId: string, budgetId: string) {
+  return request<BudgetSummaryItem>(
+    `/api/v1/organizations/${organizationId}/budgets/${budgetId}/summary`,
+  );
+}
+
+export function listSpendTransactions(organizationId: string) {
+  return request<{ items: SpendTransactionItem[] }>(
+    `/api/v1/organizations/${organizationId}/transactions`,
+  );
+}
+
+export function importSpendTransactions(
+  organizationId: string,
+  input: {
+    source_provider: string;
+    source_account_id: string;
+    rows: Array<{
+      external_id: string;
+      transaction_date: string;
+      merchant_name: string;
+      description: string;
+      amount: string;
+      currency: string;
+      department: string;
+    }>;
+  },
+) {
+  return request<ImportTransactionsResponse>(
+    `/api/v1/organizations/${organizationId}/transactions/import`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function updateSpendTransaction(
+  organizationId: string,
+  transactionId: string,
+  input: {
+    category?: string;
+    department?: string;
+  },
+) {
+  return request<SpendTransactionItem>(
+    `/api/v1/organizations/${organizationId}/transactions/${transactionId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function setSpendTransactionSplits(
+  organizationId: string,
+  transactionId: string,
+  splits: Array<{
+    amount: string;
+    department: string;
+    category: string;
+  }>,
+) {
+  return request<SpendTransactionItem>(
+    `/api/v1/organizations/${organizationId}/transactions/${transactionId}/splits`,
+    {
+      method: "POST",
+      body: JSON.stringify({ splits }),
+    },
+  );
+}
+
+export function listTransactionAnomalies(organizationId: string) {
+  return request<{ items: TransactionAnomalyItem[] }>(
+    `/api/v1/organizations/${organizationId}/transaction-anomalies`,
+  );
+}
+
+export function createAccountingPeriod(
+  organizationId: string,
+  input: {
+    name: string;
+    start_date: string;
+    end_date: string;
+  },
+) {
+  return request<AccountingPeriodItem>(
+    `/api/v1/organizations/${organizationId}/accounting-periods`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function listAccountingPeriods(organizationId: string) {
+  return request<{ items: AccountingPeriodItem[] }>(
+    `/api/v1/organizations/${organizationId}/accounting-periods`,
+  );
+}
+
+export function lockAccountingPeriod(
+  organizationId: string,
+  accountingPeriodId: string,
+) {
+  return request<AccountingPeriodItem>(
+    `/api/v1/organizations/${organizationId}/accounting-periods/${accountingPeriodId}/lock`,
+    { method: "POST" },
   );
 }

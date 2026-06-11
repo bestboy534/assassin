@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -114,6 +114,68 @@ let riskFindings: Array<{
   accepted_reason: string | null;
   accepted_until: string | null;
 }>;
+let budgets: Array<{
+  id: string;
+  organization_id: string;
+  name: string;
+  fiscal_year: number;
+  department: string;
+  amount: string;
+  currency: string;
+  status: string;
+  created_at: string;
+}>;
+let spendTransactions: Array<{
+  id: string;
+  organization_id: string;
+  source_provider: string;
+  source_account_id: string;
+  external_id: string;
+  transaction_date: string;
+  merchant_name: string;
+  description: string;
+  amount: string;
+  currency: string;
+  department: string;
+  category: string | null;
+  application_id: string | null;
+  match_confidence: string;
+  splits: Array<{
+    id: string;
+    amount: string;
+    department: string;
+    category: string;
+  }>;
+}>;
+let transactionAnomalies: Array<{
+  id: string;
+  transaction_id: string;
+  budget_id: string | null;
+  code: string;
+  rule_version: string;
+  baseline_amount: string;
+  observed_amount: string;
+  status: string;
+  evidence: string;
+}>;
+let budgetSummary: {
+  budget_id: string;
+  currency: string;
+  allocated: string;
+  actual: string;
+  committed: string;
+  forecast: string;
+  remaining: string;
+} | null;
+let accountingPeriod: {
+  id: string;
+  organization_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  locked_at: string | null;
+} | null;
 
 beforeEach(() => {
   applicationItems = [];
@@ -124,6 +186,11 @@ beforeEach(() => {
   renewals = [];
   vendors = [];
   riskFindings = [];
+  budgets = [];
+  spendTransactions = [];
+  transactionAnomalies = [];
+  budgetSummary = null;
+  accountingPeriod = null;
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -441,6 +508,232 @@ beforeEach(() => {
       riskFindings = [accepted, ...riskFindings.slice(1)];
       return Response.json(accepted);
     }
+    if (url.endsWith("/api/v1/organizations/org-1/budgets") && method === "GET") {
+      return Response.json({ items: budgets });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/transactions") && method === "GET") {
+      return Response.json({ items: spendTransactions });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/transaction-anomalies") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: transactionAnomalies });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/budgets") && method === "POST") {
+      const body = JSON.parse(String(init?.body));
+      const budget = {
+        id: "budget-created",
+        organization_id: "org-1",
+        name: body.name,
+        fiscal_year: body.fiscal_year,
+        department: body.department,
+        amount: Number(body.amount).toFixed(4),
+        currency: body.currency,
+        status: "active",
+        created_at: "2026-06-11T10:30:00Z",
+      };
+      budgets = [budget, ...budgets];
+      budgetSummary = {
+        budget_id: budget.id,
+        currency: budget.currency,
+        allocated: budget.amount,
+        actual: "0.0000",
+        committed: "0.0000",
+        forecast: "0.0000",
+        remaining: budget.amount,
+      };
+      return Response.json(budget, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/budgets/budget-created/commitments",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      if (budgetSummary) {
+        budgetSummary = {
+          ...budgetSummary,
+          [body.commitment_type]: Number(body.amount).toFixed(4),
+        };
+        budgetSummary.remaining = (
+          Number(budgetSummary.allocated) -
+          Number(budgetSummary.actual) -
+          Number(budgetSummary.committed) -
+          Number(budgetSummary.forecast)
+        ).toFixed(4);
+      }
+      return Response.json(
+        {
+          id: `commitment-${body.commitment_type}`,
+          budget_id: "budget-created",
+          commitment_type: body.commitment_type,
+          amount: Number(body.amount).toFixed(4),
+          description: body.description,
+        },
+        { status: 201 },
+      );
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/budgets/budget-created/summary") &&
+      method === "GET"
+    ) {
+      return Response.json(budgetSummary);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/transactions/import") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const row = body.rows[0];
+      const existing = spendTransactions.find(item => item.external_id === row.external_id);
+      if (existing) {
+        return Response.json(
+          { created_count: 0, existing_count: 1, items: [existing] },
+          { status: 201 },
+        );
+      }
+      const transaction = {
+        id: "transaction-created",
+        organization_id: "org-1",
+        source_provider: body.source_provider,
+        source_account_id: body.source_account_id,
+        external_id: row.external_id,
+        transaction_date: row.transaction_date,
+        merchant_name: row.merchant_name,
+        description: row.description,
+        amount: Number(row.amount).toFixed(4),
+        currency: row.currency,
+        department: row.department,
+        category: null,
+        application_id: null,
+        match_confidence: "0.0000",
+        splits: [],
+      };
+      spendTransactions = [transaction, ...spendTransactions];
+      if (budgetSummary) {
+        budgetSummary = {
+          ...budgetSummary,
+          actual: transaction.amount,
+        };
+        budgetSummary.remaining = (
+          Number(budgetSummary.allocated) -
+          Number(budgetSummary.actual) -
+          Number(budgetSummary.committed) -
+          Number(budgetSummary.forecast)
+        ).toFixed(4);
+        if (Number(budgetSummary.actual) > Number(budgetSummary.allocated)) {
+          transactionAnomalies = [
+            {
+              id: "anomaly-created",
+              transaction_id: transaction.id,
+              budget_id: budgetSummary.budget_id,
+              code: "budget_exceeded",
+              rule_version: "spend-anomaly-v1",
+              baseline_amount: budgetSummary.allocated,
+              observed_amount: budgetSummary.actual,
+              status: "open",
+              evidence: "IT actual exceeds allocated budget",
+            },
+          ];
+        }
+      }
+      return Response.json(
+        { created_count: 1, existing_count: 0, items: [transaction] },
+        { status: 201 },
+      );
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/transactions/transaction-created",
+      ) &&
+      method === "PATCH"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      spendTransactions = spendTransactions.map(item =>
+        item.id === "transaction-created" ? { ...item, ...body } : item,
+      );
+      return Response.json(spendTransactions[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/transactions/transaction-created/splits",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      spendTransactions = spendTransactions.map(item =>
+        item.id === "transaction-created"
+          ? {
+              ...item,
+              splits: body.splits.map(
+                (
+                  split: { amount: string; department: string; category: string },
+                  index: number,
+                ) => ({
+                  id: `split-${index + 1}`,
+                  amount: Number(split.amount).toFixed(4),
+                  department: split.department,
+                  category: split.category,
+                }),
+              ),
+            }
+          : item,
+      );
+      transactionAnomalies = transactionAnomalies.map(item => ({
+        ...item,
+        status: "resolved",
+      }));
+      if (budgetSummary) {
+        budgetSummary = {
+          ...budgetSummary,
+          actual: "5000.0000",
+        };
+        budgetSummary.remaining = (
+          Number(budgetSummary.allocated) -
+          Number(budgetSummary.actual) -
+          Number(budgetSummary.committed) -
+          Number(budgetSummary.forecast)
+        ).toFixed(4);
+      }
+      return Response.json(spendTransactions[0]);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/accounting-periods") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: accountingPeriod ? [accountingPeriod] : [] });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/accounting-periods") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      accountingPeriod = {
+        id: "period-created",
+        organization_id: "org-1",
+        name: body.name,
+        start_date: body.start_date,
+        end_date: body.end_date,
+        status: "open",
+        locked_at: null,
+      };
+      return Response.json(accountingPeriod, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/accounting-periods/period-created/lock",
+      ) &&
+      method === "POST"
+    ) {
+      accountingPeriod = {
+        ...accountingPeriod!,
+        status: "locked",
+        locked_at: "2026-06-30T23:59:00Z",
+      };
+      return Response.json(accountingPeriod);
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -504,7 +797,7 @@ test("renders organization billing audit history", async () => {
     },
   ];
   const router = createMemoryRouter(routes, {
-    initialEntries: ["/app/acme/spend"],
+    initialEntries: ["/app/acme/audit"],
   });
   render(<RouterProvider router={router} />);
 
@@ -516,7 +809,7 @@ test("renders organization billing audit history", async () => {
 test("creates a billing audit run from pasted text", async () => {
   const user = userEvent.setup();
   const router = createMemoryRouter(routes, {
-    initialEntries: ["/app/acme/spend"],
+    initialEntries: ["/app/acme/audit"],
   });
   render(<RouterProvider router={router} />);
 
@@ -616,4 +909,71 @@ test("creates a vendor, explains risk, and accepts a finding", async () => {
   await user.click(screen.getAllByRole("button", { name: "接受风险" })[0]);
 
   expect(await screen.findByText("已接受")).toBeVisible();
+});
+
+test("runs the budget, transaction, split, anomaly, and period close flow", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/spend"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "预算与交易" })).toBeVisible();
+  await user.type(screen.getByLabelText("预算名称"), "2026 IT 软件预算");
+  await user.clear(screen.getByLabelText("财年"));
+  await user.type(screen.getByLabelText("财年"), "2026");
+  await user.type(screen.getByLabelText("预算部门"), "IT");
+  await user.type(screen.getByLabelText("预算金额"), "10000");
+  await user.type(screen.getByLabelText("承诺金额"), "1800");
+  await user.type(screen.getByLabelText("预测金额"), "900");
+  await user.click(screen.getByRole("button", { name: "保存预算" }));
+
+  expect(await screen.findByText("2026 IT 软件预算")).toBeVisible();
+  await user.type(screen.getByLabelText("外部交易 ID"), "txn-001");
+  await user.type(screen.getByLabelText("交易日期"), "2026-06-10");
+  await user.type(screen.getByLabelText("商户"), "Notion Labs");
+  await user.type(screen.getByLabelText("交易说明"), "NOTION TEAM");
+  await user.type(screen.getByLabelText("交易金额"), "11000");
+  await user.type(screen.getByLabelText("交易部门"), "IT");
+  await user.click(screen.getByRole("button", { name: "导入交易" }));
+
+  expect(await screen.findByText("预算已超支")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "归类为软件" }));
+  await user.click(screen.getByRole("button", { name: "编辑拆分" }));
+  await user.type(screen.getByLabelText("拆分金额 1"), "5000");
+  await user.type(screen.getByLabelText("拆分部门 1"), "IT");
+  await user.type(screen.getByLabelText("拆分金额 2"), "6000");
+  await user.type(screen.getByLabelText("拆分部门 2"), "设计");
+  await user.click(screen.getByRole("button", { name: "保存拆分" }));
+
+  expect(await screen.findByText("2 条拆分")).toBeVisible();
+  await waitFor(() => {
+    expect(screen.queryByText("预算已超支")).not.toBeInTheDocument();
+  });
+  await user.type(screen.getByLabelText("期间名称"), "2026-06");
+  await user.type(screen.getByLabelText("期间开始"), "2026-06-01");
+  await user.type(screen.getByLabelText("期间结束"), "2026-06-30");
+  await user.click(screen.getByRole("button", { name: "创建期间" }));
+  await user.click(await screen.findByRole("button", { name: "锁定期间" }));
+
+  expect(await screen.findByText("期间已锁定")).toBeVisible();
+});
+
+test("restores the latest accounting period after refresh", async () => {
+  accountingPeriod = {
+    id: "period-existing",
+    organization_id: "org-1",
+    name: "2026-05",
+    start_date: "2026-05-01",
+    end_date: "2026-05-31",
+    status: "locked",
+    locked_at: "2026-05-31T23:59:00Z",
+  };
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/spend"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByText("2026-05")).toBeVisible();
+  expect(screen.getByText("期间已锁定")).toBeVisible();
 });
