@@ -12,6 +12,7 @@ from .config import get_settings
 from .core.database import get_database
 from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.applications.router import router as applications_router
+from .domains.audit_ai.router import router as billing_audit_router
 from .domains.files.router import router as files_router
 from .domains.identity.router import router as identity_router
 from .domains.jobs.router import router as jobs_router
@@ -68,6 +69,7 @@ app.include_router(files_router, prefix=settings.api_v1_prefix)
 app.include_router(identity_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
+app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

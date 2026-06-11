@@ -1,6 +1,7 @@
 from datetime import datetime
+from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,6 +18,10 @@ class AnalysisRun(Base):
     )
     source_hint: Mapped[str] = mapped_column(String(32), nullable=False)
     items_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    organization_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), index=True)
+    created_by_user_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True))
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="completed")
+    total_monthly_cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     items: Mapped[list["AnalysisItem"]] = relationship(
         back_populates="run",
         cascade="all, delete-orphan",

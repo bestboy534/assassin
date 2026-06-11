@@ -1,3 +1,5 @@
+import type { SourceHint, SubscriptionItem } from "../types";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export type OrganizationSummary = {
@@ -27,6 +29,21 @@ export type ApplicationItem = {
   technical_owner: string | null;
   risk_level: string;
   approved: boolean;
+};
+
+export type AnalysisRunSummary = {
+  id: string;
+  organization_id: string | null;
+  status: string;
+  source_hint: SourceHint;
+  items_count: number;
+  total_monthly_cost_usd: number;
+  created_at: string;
+};
+
+export type AnalysisRunDetail = {
+  run: AnalysisRunSummary;
+  items: SubscriptionItem[];
 };
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -100,6 +117,25 @@ export function createApplication(
   },
 ) {
   return request<ApplicationItem>(`/api/v1/organizations/${organizationId}/applications`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function listAnalysisRuns(organizationId: string) {
+  return request<{ items: AnalysisRunSummary[] }>(
+    `/api/v1/organizations/${organizationId}/analysis-runs`,
+  );
+}
+
+export function createAnalysisRun(
+  organizationId: string,
+  input: {
+    raw_text: string;
+    source_hint: SourceHint;
+  },
+) {
+  return request<AnalysisRunDetail>(`/api/v1/organizations/${organizationId}/analysis-runs`, {
     method: "POST",
     body: JSON.stringify(input),
   });

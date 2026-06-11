@@ -5,19 +5,24 @@ import {
   Bell,
   CheckCircle2,
   CreditCard,
+  FileText,
   LogOut,
   Plus,
   Search,
 } from "lucide-react";
 import {
+  createAnalysisRun,
   createApplication,
   getCurrentSession,
+  listAnalysisRuns,
   listApplications,
   logoutAccount,
+  type AnalysisRunSummary,
   type ApplicationItem,
   type AuthSession,
   type OrganizationSummary,
 } from "../app/api";
+import type { SourceHint, SubscriptionItem } from "../types";
 
 const dashboardCards = [
   ["应用总数", "连接身份目录后自动统计", BarChart3],
@@ -198,6 +203,14 @@ export function WorkspaceSectionPage() {
         currentOrganization={workspace.currentOrganization}
       >
         <ApplicationCatalogSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "spend") {
+    return (
+      <WorkspaceShell activeSection="spend" currentOrganization={workspace.currentOrganization}>
+        <BillingAuditSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }
@@ -384,6 +397,177 @@ function ApplicationCatalogTable({
   );
 }
 
+const sourceOptions: Array<[SourceHint, string]> = [
+  ["csv", "信用卡 CSV"],
+  ["apple_mail", "Apple 收据"],
+  ["stripe_mail", "Stripe 邮件"],
+  ["paypal_mail", "PayPal 文本"],
+  ["google_play", "Google Play"],
+  ["unknown", "未知来源"],
+];
+
+function BillingAuditSection({ organizationId }: { organizationId: string }) {
+  const [runs, setRuns] = useState<AnalysisRunSummary[]>([]);
+  const [items, setItems] = useState<SubscriptionItem[]>([]);
+  const [rawText, setRawText] = useState("");
+  const [sourceHint, setSourceHint] = useState<SourceHint>("csv");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    listAnalysisRuns(organizationId)
+      .then(response => {
+        if (active) {
+          setRuns(response.items);
+          setError(null);
+        }
+      })
+      .catch(caught => {
+        if (active) setError(caught instanceof Error ? caught.message : "账单审计加载失败");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [organizationId]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!rawText.trim()) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      const detail = await createAnalysisRun(organizationId, {
+        raw_text: rawText,
+        source_hint: sourceHint,
+      });
+      setRuns(current => [detail.run, ...current.filter(run => run.id !== detail.run.id)]);
+      setItems(detail.items);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "账单审计失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="workspace-panel">
+      <div className="workspace-section-heading">
+        <span>AI 账单审计</span>
+        <h2>账单审计</h2>
+        <p>粘贴信用卡 CSV、收据或邮件正文，系统会提取软件订阅、月化成本、风险类型和退订线索，并把结果保存到当前组织。</p>
+      </div>
+
+      <form className="workspace-audit-form" onSubmit={handleSubmit}>
+        <div className="workspace-audit-controls">
+          <label>
+            <span>来源类型</span>
+            <select
+              onChange={event => setSourceHint(event.target.value as SourceHint)}
+              value={sourceHint}
+            >
+              {sourceOptions.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button disabled={saving} type="submit">
+            <FileText className="h-4 w-4" />
+            开始审计
+          </button>
+        </div>
+        <label className="workspace-audit-textarea">
+          <span>账单文本</span>
+          <textarea
+            onChange={event => setRawText(event.target.value)}
+            placeholder="粘贴 CSV、Apple 收据、Stripe 邮件或 PayPal 文本..."
+            required
+            value={rawText}
+          />
+        </label>
+      </form>
+
+      {error && <p className="workspace-inline-error">{error}</p>}
+
+      <div className="workspace-audit-layout">
+        <BillingRunList loading={loading} runs={runs} />
+        <BillingAuditResults items={items} />
+      </div>
+    </section>
+  );
+}
+
+function BillingRunList({
+  loading,
+  runs,
+}: {
+  loading: boolean;
+  runs: AnalysisRunSummary[];
+}) {
+  if (loading) {
+    return <p className="workspace-muted">正在加载审计历史...</p>;
+  }
+
+  if (runs.length === 0) {
+    return (
+      <div className="workspace-empty">
+        <h3>还没有审计记录</h3>
+        <p>粘贴第一份账单后，这里会显示运行编号、来源、条目数和月化支出。</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="workspace-run-list">
+      <h3>最近审计</h3>
+      {runs.map(run => (
+        <article key={run.id}>
+          <div>
+            <strong>{run.id}</strong>
+            <span>{sourceLabel(run.source_hint)} · {run.items_count} 项</span>
+          </div>
+          <p>{formatUsd(run.total_monthly_cost_usd)}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function BillingAuditResults({ items }: { items: SubscriptionItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="workspace-empty">
+        <h3>等待审计结果</h3>
+        <p>提交后会在这里显示识别出的软件、证据、风险类型和月化成本。</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="workspace-audit-results">
+      <h3>本次识别结果</h3>
+      {items.map(item => (
+        <article key={item.id}>
+          <div>
+            <strong>{item.software_name}</strong>
+            <span>{item.merchant_name ?? "未知商户"} · {formatUsd(item.monthly_cost_usd)}/月</span>
+          </div>
+          <p>{item.evidence}</p>
+          <small>{statusLabel(item.status)} · {riskText(item.risk_type)}</small>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function riskLabel(riskLevel: string): string {
   const labels: Record<string, string> = {
     critical: "高风险",
@@ -393,4 +577,38 @@ function riskLabel(riskLevel: string): string {
     unknown: "待评估",
   };
   return labels[riskLevel] ?? "待评估";
+}
+
+function formatUsd(value: number): string {
+  return `$${value.toFixed(2)}`;
+}
+
+function sourceLabel(sourceHint: SourceHint): string {
+  return sourceOptions.find(([value]) => value === sourceHint)?.[1] ?? "未知来源";
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    active: "仍在使用",
+    apple_unresolved: "需要确认 Apple 收据",
+    cancel_in_progress: "取消中",
+    cancelled: "已取消",
+    flagged: "已标记",
+    ignored: "已忽略",
+    need_confirm: "待确认",
+    verified_saved: "已验证节省",
+  };
+  return labels[status] ?? "待确认";
+}
+
+function riskText(riskType: string): string {
+  const labels: Record<string, string> = {
+    api_usage: "API 用量需复核",
+    apple_unresolved: "Apple 收据需人工确认",
+    hidden_fee: "可能存在隐藏费用",
+    none: "未发现风险",
+    possible_duplicate: "可能重复订阅",
+    possible_idle: "可能低使用率",
+  };
+  return labels[riskType] ?? "风险待评估";
 }
