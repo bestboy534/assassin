@@ -13,6 +13,7 @@ import {
 import {
   createAnalysisRun,
   createApplication,
+  createSavingsOpportunity,
   approveApprovalTask,
   getCurrentSession,
   createPurchaseRequest,
@@ -32,6 +33,7 @@ import {
 import type { SourceHint, SubscriptionItem } from "../types";
 import { BudgetTransactionSection } from "./BudgetTransactionSection";
 import { ContractRenewalSection } from "./ContractRenewalSection";
+import { SavingsOptimizationSection } from "./SavingsOptimizationSection";
 import { VendorRiskSection } from "./VendorRiskSection";
 
 const dashboardCards = [
@@ -49,6 +51,7 @@ const workspaceNav = [
   ["合同续订", "contracts"],
   ["预算交易", "spend"],
   ["账单审计", "audit"],
+  ["节省优化", "savings"],
   ["报表", "reports"],
 ] as const;
 
@@ -164,7 +167,7 @@ function WorkspaceShell({
               type="button"
             >
               <LogOut className="h-4 w-4" />
-              退出
+              <span>退出</span>
             </button>
           </div>
         </header>
@@ -258,6 +261,14 @@ export function WorkspaceSectionPage() {
     return (
       <WorkspaceShell activeSection="audit" currentOrganization={workspace.currentOrganization}>
         <BillingAuditSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "savings") {
+    return (
+      <WorkspaceShell activeSection="savings" currentOrganization={workspace.currentOrganization}>
+        <SavingsOptimizationSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }
@@ -706,6 +717,9 @@ function BillingAuditSection({ organizationId }: { organizationId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdOpportunityIds, setCreatedOpportunityIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     let active = true;
@@ -745,6 +759,30 @@ function BillingAuditSection({ organizationId }: { organizationId: string }) {
       setError(caught instanceof Error ? caught.message : "账单审计失败");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleCreateSavingsOpportunity(item: SubscriptionItem) {
+    setError(null);
+    try {
+      const effectiveDate = new Date().toISOString().slice(0, 10);
+      await createSavingsOpportunity(organizationId, {
+        source_type: "analysis_item",
+        source_id: item.id,
+        rule_version: "billing-audit-v1",
+        period_key: effectiveDate.slice(0, 7),
+        title: `优化 ${item.software_name} 订阅`,
+        department: "待分配",
+        category: "cancellation",
+        monthly_baseline: String(item.monthly_cost_usd),
+        currency: "USD",
+        effective_date: effectiveDate,
+        contract_end: null,
+        evidence: item.evidence,
+      });
+      setCreatedOpportunityIds(current => new Set(current).add(item.id));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "创建节省机会失败");
     }
   }
 
@@ -791,7 +829,11 @@ function BillingAuditSection({ organizationId }: { organizationId: string }) {
 
       <div className="workspace-audit-layout">
         <BillingRunList loading={loading} runs={runs} />
-        <BillingAuditResults items={items} />
+        <BillingAuditResults
+          createdOpportunityIds={createdOpportunityIds}
+          items={items}
+          onCreateSavingsOpportunity={handleCreateSavingsOpportunity}
+        />
       </div>
     </section>
   );
@@ -833,7 +875,15 @@ function BillingRunList({
   );
 }
 
-function BillingAuditResults({ items }: { items: SubscriptionItem[] }) {
+function BillingAuditResults({
+  createdOpportunityIds,
+  items,
+  onCreateSavingsOpportunity,
+}: {
+  createdOpportunityIds: Set<string>;
+  items: SubscriptionItem[];
+  onCreateSavingsOpportunity: (item: SubscriptionItem) => Promise<void>;
+}) {
   if (items.length === 0) {
     return (
       <div className="workspace-empty">
@@ -854,6 +904,17 @@ function BillingAuditResults({ items }: { items: SubscriptionItem[] }) {
           </div>
           <p>{item.evidence}</p>
           <small>{statusLabel(item.status)} · {riskText(item.risk_type)}</small>
+          {createdOpportunityIds.has(item.id) ? (
+            <span className="workspace-status-success">已创建节省机会</span>
+          ) : (
+            <button
+              className="workspace-audit-opportunity"
+              onClick={() => onCreateSavingsOpportunity(item)}
+              type="button"
+            >
+              转为节省机会
+            </button>
+          )}
         </article>
       ))}
     </div>

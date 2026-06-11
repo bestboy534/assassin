@@ -9,6 +9,13 @@ from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
 from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
+from .domains.savings.models import (
+    OptimizationProject,
+    OptimizationTask,
+    SavingsBaseline,
+    SavingsOpportunity,
+    SavingsResult,
+)
 from .domains.spend.models import (
     AccountingPeriod,
     Budget,
@@ -35,10 +42,15 @@ __all__ = [
     "Job",
     "Organization",
     "OrganizationMember",
+    "OptimizationProject",
+    "OptimizationTask",
     "OutboxEvent",
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",
+    "SavingsBaseline",
+    "SavingsOpportunity",
+    "SavingsResult",
     "StoredFile",
     "SpendTransaction",
     "TransactionAnomaly",

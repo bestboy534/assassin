@@ -22,6 +22,7 @@ from .domains.procurement.router import (
     approval_tasks_router,
     purchase_requests_router,
 )
+from .domains.savings.router import router as savings_router
 from .domains.spend.router import router as spend_router
 from .domains.vendors.router import risk_findings_router, vendors_router
 from .infrastructure.queue.client import JobQueue, build_queue
@@ -84,6 +85,7 @@ app.include_router(renewals_router, prefix=settings.api_v1_prefix)
 app.include_router(vendors_router, prefix=settings.api_v1_prefix)
 app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 app.include_router(spend_router, prefix=settings.api_v1_prefix)
+app.include_router(savings_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

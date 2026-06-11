@@ -246,6 +246,77 @@ export type ImportTransactionsResponse = {
   items: SpendTransactionItem[];
 };
 
+export type SavingsBaselineItem = {
+  id: string;
+  version: number;
+  monthly_cost: string;
+  calculation_months: number;
+  amount: string;
+  calculation_method: string;
+  effective_date: string;
+  contract_end: string | null;
+};
+
+export type SavingsOpportunityItem = {
+  id: string;
+  organization_id: string;
+  source_type: string;
+  source_id: string;
+  rule_version: string;
+  period_key: string;
+  title: string;
+  department: string;
+  category: string;
+  status: string;
+  estimated_amount: string;
+  currency: string;
+  evidence: string;
+  created_at: string;
+  baseline: SavingsBaselineItem;
+};
+
+export type OptimizationTaskItem = {
+  id: string;
+  title: string;
+  status: string;
+};
+
+export type SavingsResultItem = {
+  id: string;
+  project_id: string;
+  status: string;
+  action: string;
+  effective_date: string;
+  new_monthly_cost: string;
+  realized_amount: string;
+  verified_amount: string;
+  realization_evidence: string;
+  evidence_references: string[];
+  verified_at: string | null;
+};
+
+export type OptimizationProjectBundle = {
+  project: {
+    id: string;
+    opportunity_id: string;
+    owner_name: string;
+    due_date: string;
+    status: string;
+    target_amount: string;
+    currency: string;
+  };
+  tasks: OptimizationTaskItem[];
+  result: SavingsResultItem | null;
+};
+
+export type SavingsSummaryItem = {
+  currency: string;
+  estimated: string;
+  realized: string;
+  verified: string;
+  cost_avoidance: string;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -674,5 +745,106 @@ export function lockAccountingPeriod(
   return request<AccountingPeriodItem>(
     `/api/v1/organizations/${organizationId}/accounting-periods/${accountingPeriodId}/lock`,
     { method: "POST" },
+  );
+}
+
+export function listSavingsOpportunities(organizationId: string) {
+  return request<{ items: SavingsOpportunityItem[] }>(
+    `/api/v1/organizations/${organizationId}/savings-opportunities`,
+  );
+}
+
+export function createSavingsOpportunity(
+  organizationId: string,
+  input: {
+    source_type: string;
+    source_id: string;
+    rule_version: string;
+    period_key: string;
+    title: string;
+    department: string;
+    category: "cancellation" | "downgrade" | "negotiation" | "seat_recovery" | "cost_avoidance";
+    monthly_baseline: string;
+    currency: string;
+    effective_date: string;
+    contract_end: string | null;
+    evidence: string;
+  },
+) {
+  return request<SavingsOpportunityItem>(
+    `/api/v1/organizations/${organizationId}/savings-opportunities`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function confirmSavingsOpportunity(
+  organizationId: string,
+  opportunityId: string,
+) {
+  return request<SavingsOpportunityItem>(
+    `/api/v1/organizations/${organizationId}/savings-opportunities/${opportunityId}/confirm`,
+    { method: "POST" },
+  );
+}
+
+export function listOptimizationProjects(organizationId: string) {
+  return request<{ items: OptimizationProjectBundle[] }>(
+    `/api/v1/organizations/${organizationId}/optimization-projects`,
+  );
+}
+
+export function createOptimizationProject(
+  organizationId: string,
+  opportunityId: string,
+  input: { owner_name: string; due_date: string },
+) {
+  return request<OptimizationProjectBundle>(
+    `/api/v1/organizations/${organizationId}/savings-opportunities/${opportunityId}/projects`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function realizeSavings(
+  organizationId: string,
+  projectId: string,
+  input: {
+    action: "cancelled" | "downgraded" | "negotiated" | "seats_recovered";
+    effective_date: string;
+    new_monthly_cost: string;
+    evidence: string;
+  },
+) {
+  return request<OptimizationProjectBundle>(
+    `/api/v1/organizations/${organizationId}/optimization-projects/${projectId}/realize`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function verifySavings(
+  organizationId: string,
+  projectId: string,
+  evidenceReferences: string[],
+) {
+  return request<OptimizationProjectBundle>(
+    `/api/v1/organizations/${organizationId}/optimization-projects/${projectId}/verify`,
+    {
+      method: "POST",
+      body: JSON.stringify({ evidence_references: evidenceReferences }),
+    },
+  );
+}
+
+export function getSavingsSummary(organizationId: string) {
+  return request<SavingsSummaryItem>(
+    `/api/v1/organizations/${organizationId}/savings-summary`,
   );
 }

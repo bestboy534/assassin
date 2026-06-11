@@ -176,6 +176,64 @@ let accountingPeriod: {
   status: string;
   locked_at: string | null;
 } | null;
+let savingsOpportunities: Array<{
+  id: string;
+  organization_id: string;
+  source_type: string;
+  source_id: string;
+  rule_version: string;
+  period_key: string;
+  title: string;
+  department: string;
+  category: string;
+  status: string;
+  estimated_amount: string;
+  currency: string;
+  evidence: string;
+  created_at: string;
+  baseline: {
+    id: string;
+    version: number;
+    monthly_cost: string;
+    calculation_months: number;
+    amount: string;
+    calculation_method: string;
+    effective_date: string;
+    contract_end: string | null;
+  };
+}>;
+let optimizationProjects: Array<{
+  project: {
+    id: string;
+    opportunity_id: string;
+    owner_name: string;
+    due_date: string;
+    status: string;
+    target_amount: string;
+    currency: string;
+  };
+  tasks: Array<{ id: string; title: string; status: string }>;
+  result: {
+    id: string;
+    project_id: string;
+    status: string;
+    action: string;
+    effective_date: string;
+    new_monthly_cost: string;
+    realized_amount: string;
+    verified_amount: string;
+    realization_evidence: string;
+    evidence_references: string[];
+    verified_at: string | null;
+  } | null;
+}>;
+let savingsSummary: {
+  currency: string;
+  estimated: string;
+  realized: string;
+  verified: string;
+  cost_avoidance: string;
+};
 
 beforeEach(() => {
   applicationItems = [];
@@ -191,6 +249,15 @@ beforeEach(() => {
   transactionAnomalies = [];
   budgetSummary = null;
   accountingPeriod = null;
+  savingsOpportunities = [];
+  optimizationProjects = [];
+  savingsSummary = {
+    currency: "USD",
+    estimated: "0.0000",
+    realized: "0.0000",
+    verified: "0.0000",
+    cost_avoidance: "0.0000",
+  };
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -734,6 +801,155 @@ beforeEach(() => {
       };
       return Response.json(accountingPeriod);
     }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/savings-opportunities") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: savingsOpportunities });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/optimization-projects") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: optimizationProjects });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/savings-summary") &&
+      method === "GET"
+    ) {
+      return Response.json(savingsSummary);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/savings-opportunities") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const months = body.contract_end ? 6 : 12;
+      const estimated = (Number(body.monthly_baseline) * months).toFixed(4);
+      const opportunity = {
+        id: "opportunity-created",
+        organization_id: "org-1",
+        source_type: body.source_type,
+        source_id: body.source_id,
+        rule_version: body.rule_version,
+        period_key: body.period_key,
+        title: body.title,
+        department: body.department,
+        category: body.category,
+        status: "new",
+        estimated_amount: estimated,
+        currency: body.currency,
+        evidence: body.evidence,
+        created_at: "2026-06-11T11:00:00Z",
+        baseline: {
+          id: "baseline-created",
+          version: 1,
+          monthly_cost: Number(body.monthly_baseline).toFixed(4),
+          calculation_months: months,
+          amount: estimated,
+          calculation_method: body.contract_end ? "remaining_term" : "annualized",
+          effective_date: body.effective_date,
+          contract_end: body.contract_end,
+        },
+      };
+      savingsOpportunities = [opportunity];
+      savingsSummary = { ...savingsSummary, estimated };
+      return Response.json(opportunity, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/savings-opportunities/opportunity-created/confirm",
+      ) &&
+      method === "POST"
+    ) {
+      savingsOpportunities = savingsOpportunities.map(item => ({
+        ...item,
+        status: "confirmed",
+      }));
+      return Response.json(savingsOpportunities[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/savings-opportunities/opportunity-created/projects",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const bundle = {
+        project: {
+          id: "project-created",
+          opportunity_id: "opportunity-created",
+          owner_name: body.owner_name,
+          due_date: body.due_date,
+          status: "in_progress",
+          target_amount: savingsOpportunities[0].estimated_amount,
+          currency: "USD",
+        },
+        tasks: [
+          {
+            id: "task-created",
+            title: "确认取消路径与负责人",
+            status: "open",
+          },
+        ],
+        result: null,
+      };
+      optimizationProjects = [bundle];
+      savingsOpportunities = savingsOpportunities.map(item => ({
+        ...item,
+        status: "in_progress",
+      }));
+      return Response.json(bundle, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/optimization-projects/project-created/realize",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const result = {
+        id: "result-created",
+        project_id: "project-created",
+        status: "realized",
+        action: body.action,
+        effective_date: body.effective_date,
+        new_monthly_cost: Number(body.new_monthly_cost).toFixed(4),
+        realized_amount: "600.0000",
+        verified_amount: "0.0000",
+        realization_evidence: body.evidence,
+        evidence_references: [],
+        verified_at: null,
+      };
+      optimizationProjects = optimizationProjects.map(bundle => ({
+        ...bundle,
+        project: { ...bundle.project, status: "realized" },
+        result,
+      }));
+      savingsSummary = { ...savingsSummary, realized: "600.0000" };
+      return Response.json(optimizationProjects[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/optimization-projects/project-created/verify",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      optimizationProjects = optimizationProjects.map(bundle => ({
+        ...bundle,
+        project: { ...bundle.project, status: "verified" },
+        result: {
+          ...bundle.result!,
+          status: "verified",
+          verified_amount: "600.0000",
+          evidence_references: body.evidence_references,
+          verified_at: "2026-08-01T09:00:00Z",
+        },
+      }));
+      savingsSummary = { ...savingsSummary, verified: "600.0000" };
+      return Response.json(optimizationProjects[0]);
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -976,4 +1192,57 @@ test("restores the latest accounting period after refresh", async () => {
 
   expect(await screen.findByText("2026-05")).toBeVisible();
   expect(screen.getByText("期间已锁定")).toBeVisible();
+});
+
+test("runs the savings opportunity through verified savings", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/savings"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "节省优化" })).toBeVisible();
+  await user.type(screen.getByLabelText("机会标题"), "取消闲置 Notion 订阅");
+  await user.type(screen.getByLabelText("负责部门"), "运营");
+  await user.type(screen.getByLabelText("月度基线"), "100");
+  await user.type(screen.getByLabelText("生效日期"), "2026-07-01");
+  await user.type(screen.getByLabelText("合同结束"), "2026-12-31");
+  await user.type(screen.getByLabelText("发现证据"), "连续 60 天无活跃使用记录");
+  await user.click(screen.getByRole("button", { name: "创建节省机会" }));
+
+  expect(await screen.findByText("$600.00")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "确认机会" }));
+  await user.type(screen.getByLabelText("项目负责人"), "运营负责人");
+  await user.type(screen.getByLabelText("完成期限"), "2026-07-31");
+  await user.click(screen.getByRole("button", { name: "创建优化项目" }));
+
+  expect(await screen.findByText("确认取消路径与负责人")).toBeVisible();
+  await user.type(screen.getByLabelText("调整后月费"), "0");
+  await user.type(screen.getByLabelText("执行日期"), "2026-07-01");
+  await user.type(screen.getByLabelText("执行证据"), "供应商确认已取消");
+  await user.click(screen.getByRole("button", { name: "记录实际节省" }));
+
+  expect(await screen.findByText("已实现 $600.00")).toBeVisible();
+  await user.type(
+    screen.getByLabelText("验证证据"),
+    "transaction:txn-2026-08-notion",
+  );
+  await user.click(screen.getByRole("button", { name: "验证正式节省" }));
+
+  expect(await screen.findByText("正式节省 $600.00")).toBeVisible();
+});
+
+test("creates a savings opportunity from a billing audit result", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/audit"],
+  });
+  render(<RouterProvider router={router} />);
+
+  await screen.findByRole("heading", { name: "账单审计" });
+  await user.type(screen.getByLabelText("账单文本"), "OPENAI,20,USD");
+  await user.click(screen.getByRole("button", { name: "开始审计" }));
+  await user.click(await screen.findByRole("button", { name: "转为节省机会" }));
+
+  expect(await screen.findByText("已创建节省机会")).toBeVisible();
 });
