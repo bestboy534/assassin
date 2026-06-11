@@ -7,17 +7,21 @@ from .domains.identity.models import User, UserSession
 from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
+from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
 
 __all__ = [
     "AnalysisItem",
     "AnalysisRun",
     "Application",
     "ApplicationSource",
+    "ApprovalDecision",
+    "ApprovalTask",
     "InboxReceipt",
     "Job",
     "Organization",
     "OrganizationMember",
     "OutboxEvent",
+    "PurchaseRequest",
     "StoredFile",
     "User",
     "UserSession",

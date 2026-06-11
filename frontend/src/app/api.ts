@@ -46,6 +46,31 @@ export type AnalysisRunDetail = {
   items: SubscriptionItem[];
 };
 
+export type PurchaseRequestItem = {
+  id: string;
+  organization_id: string;
+  software_name: string;
+  business_reason: string;
+  estimated_monthly_cost_usd: number;
+  department: string;
+  handles_sensitive_data: boolean;
+  data_categories: string[];
+  status: string;
+  current_approval_task_id: string | null;
+  submitted_at: string | null;
+  decided_at: string | null;
+  created_at: string;
+};
+
+export type ApprovalTaskItem = {
+  id: string;
+  organization_id: string;
+  purchase_request_id: string;
+  assignee_role: string;
+  status: string;
+  created_at: string;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -139,4 +164,61 @@ export function createAnalysisRun(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export function listPurchaseRequests(organizationId: string) {
+  return request<{ items: PurchaseRequestItem[] }>(
+    `/api/v1/organizations/${organizationId}/purchase-requests`,
+  );
+}
+
+export function createPurchaseRequest(
+  organizationId: string,
+  input: {
+    software_name: string;
+    business_reason: string;
+    estimated_monthly_cost_usd: number;
+    department: string;
+    handles_sensitive_data: boolean;
+    data_categories: string[];
+  },
+) {
+  return request<PurchaseRequestItem>(
+    `/api/v1/organizations/${organizationId}/purchase-requests`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function submitPurchaseRequest(organizationId: string, requestId: string) {
+  return request<PurchaseRequestItem>(
+    `/api/v1/organizations/${organizationId}/purchase-requests/${requestId}/submit`,
+    { method: "POST" },
+  );
+}
+
+export function listApprovalTasks(organizationId: string) {
+  return request<{ items: ApprovalTaskItem[] }>(
+    `/api/v1/organizations/${organizationId}/approval-tasks`,
+  );
+}
+
+export function approveApprovalTask(
+  organizationId: string,
+  taskId: string,
+  comment: string,
+  idempotencyKey: string,
+) {
+  return request<ApprovalTaskItem>(
+    `/api/v1/organizations/${organizationId}/approval-tasks/${taskId}/approve`,
+    {
+      method: "POST",
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({ comment }),
+    },
+  );
 }

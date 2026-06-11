@@ -17,6 +17,10 @@ from .domains.files.router import router as files_router
 from .domains.identity.router import router as identity_router
 from .domains.jobs.router import router as jobs_router
 from .domains.organizations.router import router as organizations_router
+from .domains.procurement.router import (
+    approval_tasks_router,
+    purchase_requests_router,
+)
 from .infrastructure.queue.client import JobQueue, build_queue
 from .infrastructure.storage.base import ObjectStorage
 from .infrastructure.storage.factory import build_storage
@@ -70,6 +74,8 @@ app.include_router(identity_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
+app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)
+app.include_router(approval_tasks_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

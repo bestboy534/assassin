@@ -41,10 +41,32 @@ let auditRuns: Array<{
   total_monthly_cost_usd: number;
   created_at: string;
 }>;
+let purchaseRequests: Array<{
+  id: string;
+  organization_id: string;
+  software_name: string;
+  business_reason: string;
+  estimated_monthly_cost_usd: number;
+  department: string;
+  handles_sensitive_data: boolean;
+  data_categories: string[];
+  status: string;
+  current_approval_task_id: string | null;
+}>;
+let approvalTasks: Array<{
+  id: string;
+  organization_id: string;
+  purchase_request_id: string;
+  assignee_role: string;
+  status: string;
+  created_at: string;
+}>;
 
 beforeEach(() => {
   applicationItems = [];
   auditRuns = [];
+  purchaseRequests = [];
+  approvalTasks = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -114,6 +136,73 @@ beforeEach(() => {
           ],
         },
         { status: 201 },
+      );
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/purchase-requests") && method === "GET") {
+      return Response.json({ items: purchaseRequests });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/purchase-requests") && method === "POST") {
+      const body = JSON.parse(String(init?.body));
+      const created = {
+        id: "request-created",
+        organization_id: "org-1",
+        software_name: body.software_name,
+        business_reason: body.business_reason,
+        estimated_monthly_cost_usd: body.estimated_monthly_cost_usd,
+        department: body.department,
+        handles_sensitive_data: body.handles_sensitive_data,
+        data_categories: body.data_categories,
+        status: "draft",
+        current_approval_task_id: null,
+      };
+      purchaseRequests = [created, ...purchaseRequests];
+      return Response.json(created, { status: 201 });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/purchase-requests/request-created/submit") &&
+      method === "POST"
+    ) {
+      purchaseRequests = purchaseRequests.map(item =>
+        item.id === "request-created"
+          ? { ...item, status: "in_review", current_approval_task_id: "task-created" }
+          : item,
+      );
+      approvalTasks = [
+        {
+          id: "task-created",
+          organization_id: "org-1",
+          purchase_request_id: "request-created",
+          assignee_role: "finance",
+          status: "pending",
+          created_at: "2026-06-11T10:05:00Z",
+        },
+        ...approvalTasks,
+      ];
+      return Response.json(purchaseRequests.find(item => item.id === "request-created"));
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/approval-tasks") && method === "GET") {
+      return Response.json({ items: approvalTasks });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/approval-tasks/task-created/approve") &&
+      method === "POST"
+    ) {
+      purchaseRequests = purchaseRequests.map(item =>
+        item.id === "request-created" ? { ...item, status: "approved" } : item,
+      );
+      approvalTasks = approvalTasks.map(item =>
+        item.id === "task-created" ? { ...item, status: "approved" } : item,
+      );
+      return Response.json(
+        {
+          id: "task-created",
+          organization_id: "org-1",
+          purchase_request_id: "request-created",
+          assignee_role: "finance",
+          status: "approved",
+          created_at: "2026-06-11T10:05:00Z",
+        },
+        { status: 200 },
       );
     }
     return Response.json({ detail: "Not found" }, { status: 404 });
@@ -205,4 +294,29 @@ test("creates a billing audit run from pasted text", async () => {
   expect(await screen.findByText("ChatGPT")).toBeVisible();
   expect(screen.getByText("OPENAI row")).toBeVisible();
   expect(await screen.findByText("run-created")).toBeVisible();
+});
+
+test("renders procurement approvals and processes a request", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/procurement"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "采购审批" })).toBeVisible();
+  await user.type(screen.getByLabelText("软件名称"), "Notion AI");
+  await user.type(screen.getByLabelText("用途说明"), "团队知识库需要 AI 总结能力");
+  await user.type(screen.getByLabelText("月度预算"), "120");
+  await user.type(screen.getByLabelText("部门"), "运营");
+  await user.click(screen.getByLabelText("涉及敏感数据"));
+  await user.type(screen.getByLabelText("数据分类"), "客户资料, 内部文档");
+  await user.click(screen.getByRole("button", { name: "保存申请" }));
+
+  expect(await screen.findByText("Notion AI")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "提交审批" }));
+
+  expect(await screen.findByText("财务审批")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "批准" }));
+
+  expect((await screen.findAllByText("已批准")).length).toBeGreaterThanOrEqual(2);
 });

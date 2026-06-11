@@ -13,14 +13,21 @@ import {
 import {
   createAnalysisRun,
   createApplication,
+  approveApprovalTask,
   getCurrentSession,
+  createPurchaseRequest,
+  listApprovalTasks,
   listAnalysisRuns,
   listApplications,
+  listPurchaseRequests,
   logoutAccount,
   type AnalysisRunSummary,
+  type ApprovalTaskItem,
   type ApplicationItem,
   type AuthSession,
   type OrganizationSummary,
+  type PurchaseRequestItem,
+  submitPurchaseRequest,
 } from "../app/api";
 import type { SourceHint, SubscriptionItem } from "../types";
 
@@ -203,6 +210,17 @@ export function WorkspaceSectionPage() {
         currentOrganization={workspace.currentOrganization}
       >
         <ApplicationCatalogSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "procurement") {
+    return (
+      <WorkspaceShell
+        activeSection="procurement"
+        currentOrganization={workspace.currentOrganization}
+      >
+        <ProcurementSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }
@@ -394,6 +412,251 @@ function ApplicationCatalogTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ProcurementSection({ organizationId }: { organizationId: string }) {
+  const [requests, setRequests] = useState<PurchaseRequestItem[]>([]);
+  const [tasks, setTasks] = useState<ApprovalTaskItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [softwareName, setSoftwareName] = useState("");
+  const [businessReason, setBusinessReason] = useState("");
+  const [monthlyBudget, setMonthlyBudget] = useState("");
+  const [department, setDepartment] = useState("");
+  const [handlesSensitiveData, setHandlesSensitiveData] = useState(false);
+  const [dataCategories, setDataCategories] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    Promise.all([
+      listPurchaseRequests(organizationId),
+      listApprovalTasks(organizationId),
+    ])
+      .then(([requestResponse, taskResponse]) => {
+        if (active) {
+          setRequests(requestResponse.items);
+          setTasks(taskResponse.items);
+          setError(null);
+        }
+      })
+      .catch(caught => {
+        if (active) setError(caught instanceof Error ? caught.message : "采购审批加载失败");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [organizationId]);
+
+  async function refreshTasks() {
+    const response = await listApprovalTasks(organizationId);
+    setTasks(response.items);
+  }
+
+  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const budget = Number(monthlyBudget);
+    if (!softwareName.trim() || !businessReason.trim() || Number.isNaN(budget)) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      const created = await createPurchaseRequest(organizationId, {
+        software_name: softwareName.trim(),
+        business_reason: businessReason.trim(),
+        estimated_monthly_cost_usd: budget,
+        department: department.trim() || "未分配",
+        handles_sensitive_data: handlesSensitiveData,
+        data_categories: dataCategories
+          .split(/[,，\n]/)
+          .map(item => item.trim())
+          .filter(Boolean),
+      });
+      setRequests(current => [created, ...current.filter(item => item.id !== created.id)]);
+      setSoftwareName("");
+      setBusinessReason("");
+      setMonthlyBudget("");
+      setDepartment("");
+      setHandlesSensitiveData(false);
+      setDataCategories("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "采购申请保存失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSubmitRequest(requestId: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await submitPurchaseRequest(organizationId, requestId);
+      setRequests(current => current.map(item => (item.id === updated.id ? updated : item)));
+      await refreshTasks();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "提交审批失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleApprove(task: ApprovalTaskItem) {
+    setSaving(true);
+    setError(null);
+    try {
+      const idempotencyKey = window.crypto.randomUUID?.() ?? `${task.id}-${Date.now()}`;
+      const updated = await approveApprovalTask(
+        organizationId,
+        task.id,
+        "同意采购。",
+        idempotencyKey,
+      );
+      setTasks(current => current.map(item => (item.id === updated.id ? updated : item)));
+      setRequests(current =>
+        current.map(item =>
+          item.id === task.purchase_request_id ? { ...item, status: "approved" } : item,
+        ),
+      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "审批失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="workspace-panel">
+      <div className="workspace-section-heading">
+        <span>采购与审批</span>
+        <h2>采购审批</h2>
+        <p>先登记采购意图，再交给财务审批。这里保留草稿、提交和批准三个动作，后续会继续接入版本化流程和多角色审批。</p>
+      </div>
+
+      <form className="workspace-procurement-form" onSubmit={handleCreate}>
+        <label>
+          <span>软件名称</span>
+          <input
+            onChange={event => setSoftwareName(event.target.value)}
+            placeholder="例如 Notion AI"
+            required
+            value={softwareName}
+          />
+        </label>
+        <label>
+          <span>用途说明</span>
+          <textarea
+            onChange={event => setBusinessReason(event.target.value)}
+            placeholder="为什么需要采购这款软件"
+            required
+            value={businessReason}
+          />
+        </label>
+        <label>
+          <span>月度预算</span>
+          <input
+            onChange={event => setMonthlyBudget(event.target.value)}
+            placeholder="120"
+            required
+            step="0.01"
+            type="number"
+            value={monthlyBudget}
+          />
+        </label>
+        <label>
+          <span>部门</span>
+          <input
+            onChange={event => setDepartment(event.target.value)}
+            placeholder="运营 / 财务 / IT"
+            required
+            value={department}
+          />
+        </label>
+        <label className="workspace-toggle">
+          <input
+            checked={handlesSensitiveData}
+            onChange={event => setHandlesSensitiveData(event.target.checked)}
+            type="checkbox"
+          />
+          <span>涉及敏感数据</span>
+        </label>
+        <label className="workspace-procurement-wide">
+          <span>数据分类</span>
+          <textarea
+            onChange={event => setDataCategories(event.target.value)}
+            placeholder="客户资料, 内部文档"
+            value={dataCategories}
+          />
+        </label>
+        <button disabled={saving} type="submit">
+          保存申请
+        </button>
+      </form>
+
+      {error && <p className="workspace-inline-error">{error}</p>}
+
+      <div className="workspace-audit-layout">
+        <div className="workspace-run-list">
+          <h3>采购申请</h3>
+          {loading ? <p className="workspace-muted">正在加载采购申请...</p> : null}
+          {!loading && requests.length === 0 ? (
+            <div className="workspace-empty">
+              <h3>还没有采购申请</h3>
+              <p>先保存一个草稿，再提交给财务审批。</p>
+            </div>
+          ) : null}
+          {requests.map(request => (
+            <article key={request.id} className="workspace-procurement-card">
+              <div>
+                <strong>{request.software_name}</strong>
+                <span>
+                  {request.department} · {formatUsd(request.estimated_monthly_cost_usd)}/月
+                </span>
+                <small>{procurementStatusLabel(request.status)}</small>
+              </div>
+              {request.status === "draft" ? (
+                <button
+                  disabled={saving}
+                  onClick={() => handleSubmitRequest(request.id)}
+                  type="button"
+                >
+                  提交审批
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </div>
+
+        <div className="workspace-audit-results">
+          <h3>审批任务</h3>
+          {loading ? <p className="workspace-muted">正在加载审批任务...</p> : null}
+          {!loading && tasks.length === 0 ? (
+            <div className="workspace-empty">
+              <h3>还没有审批任务</h3>
+              <p>提交采购申请后，这里会出现财务审批任务。</p>
+            </div>
+          ) : null}
+          {tasks.map(task => (
+            <article key={task.id} className="workspace-procurement-card">
+              <div>
+                <strong>{approvalRoleLabel(task.assignee_role)}</strong>
+                <span>{task.purchase_request_id}</span>
+                <small>{procurementStatusLabel(task.status)}</small>
+              </div>
+              {task.status === "pending" ? (
+                <button disabled={saving} onClick={() => handleApprove(task)} type="button">
+                  批准
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -599,6 +862,28 @@ function statusLabel(status: string): string {
     verified_saved: "已验证节省",
   };
   return labels[status] ?? "待确认";
+}
+
+function procurementStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    approved: "已批准",
+    cancelled: "已撤回",
+    draft: "草稿",
+    in_review: "审批中",
+    rejected: "已拒绝",
+    withdrawn: "已撤回",
+  };
+  return labels[status] ?? "待处理";
+}
+
+function approvalRoleLabel(role: string): string {
+  const labels: Record<string, string> = {
+    finance: "财务审批",
+    it: "IT 审批",
+    security: "安全审批",
+    procurement: "采购审批",
+  };
+  return labels[role] ?? `${role} 审批`;
 }
 
 function riskText(riskType: string): string {
