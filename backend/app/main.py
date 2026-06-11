@@ -12,7 +12,9 @@ from .config import get_settings
 from .core.database import get_database
 from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.files.router import router as files_router
+from .domains.identity.router import router as identity_router
 from .domains.jobs.router import router as jobs_router
+from .domains.organizations.router import router as organizations_router
 from .infrastructure.queue.client import JobQueue, build_queue
 from .infrastructure.storage.base import ObjectStorage
 from .infrastructure.storage.factory import build_storage
@@ -62,6 +64,8 @@ app.add_middleware(
 )
 app.include_router(jobs_router, prefix=settings.api_v1_prefix)
 app.include_router(files_router, prefix=settings.api_v1_prefix)
+app.include_router(identity_router, prefix=settings.api_v1_prefix)
+app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

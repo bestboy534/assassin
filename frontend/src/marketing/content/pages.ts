@@ -379,7 +379,7 @@ export const publicPages = [
     "资源",
     "评估软件管理平台时该看什么",
     "从采购、财务、IT、安全和落地成本五个角度，判断什么方案适合你的团队。",
-    { label: "查看平台差异", to: "/how-cledara-is-different" },
+    { label: "查看平台差异", to: "/why/difference" },
   ),
   page(
     "pricing",

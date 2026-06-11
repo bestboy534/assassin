@@ -2652,3 +2652,273 @@ header button[aria-label] {
     padding: 22px;
   }
 }
+
+.auth-page {
+  background: #f6fafb;
+  padding: 88px 20px;
+}
+
+.auth-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.7fr);
+  gap: 56px;
+  max-width: 1120px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.auth-panel h1 {
+  margin-top: 24px;
+  color: #171b46;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1.02;
+  font-weight: 950;
+}
+
+.auth-panel p {
+  margin-top: 24px;
+  color: #526070;
+  font-size: 1.12rem;
+  line-height: 1.8;
+}
+
+.auth-form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid #dfe7ed;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 55px rgb(15 23 42 / 8%);
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+  color: #171b46;
+  font-weight: 800;
+}
+
+.auth-form input {
+  min-height: 46px;
+  border: 1px solid #cad5df;
+  border-radius: 6px;
+  padding: 0 14px;
+  color: #172033;
+  font-weight: 500;
+}
+
+.auth-error {
+  margin: 0;
+  border-radius: 6px;
+  background: #fff1f2;
+  padding: 12px 14px;
+  color: #be123c;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.auth-switch {
+  margin: 0;
+  color: #526070;
+  font-size: 0.95rem;
+}
+
+.auth-switch a {
+  margin-left: 8px;
+  color: #20245f;
+  font-weight: 900;
+}
+
+.workspace-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: #f6fafb;
+  color: #172033;
+}
+
+.workspace-sidebar {
+  background: #20245f;
+  color: #fff;
+  padding: 24px;
+}
+
+.workspace-mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-weight: 950;
+}
+
+.workspace-mark span {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #cafbff, #2ecad3);
+}
+
+.workspace-sidebar nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 36px;
+}
+
+.workspace-sidebar nav a {
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: rgb(255 255 255 / 76%);
+  font-weight: 800;
+}
+
+.workspace-sidebar nav a[aria-current="page"],
+.workspace-sidebar nav a:hover {
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}
+
+.workspace-main {
+  min-width: 0;
+  padding: 28px;
+}
+
+.workspace-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.workspace-topbar p {
+  margin: 0 0 4px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.workspace-topbar h1 {
+  margin: 0;
+  color: #171b46;
+  font-size: 1.8rem;
+  font-weight: 950;
+}
+
+.workspace-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-actions button {
+  min-height: 42px;
+  border: 1px solid #dfe7ed;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 850;
+}
+
+.workspace-hero {
+  margin-top: 30px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 32px;
+  border: 1px solid #dfe7ed;
+}
+
+.workspace-hero span {
+  color: #1aa4ad;
+  font-weight: 950;
+}
+
+.workspace-hero h2 {
+  margin: 12px 0 0;
+  color: #171b46;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  font-weight: 950;
+}
+
+.workspace-hero p {
+  max-width: 760px;
+  margin: 18px 0 0;
+  color: #526070;
+  line-height: 1.8;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.workspace-card {
+  border: 1px solid #dfe7ed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 22px;
+}
+
+.workspace-card svg {
+  color: #1aa4ad;
+}
+
+.workspace-card h3 {
+  margin: 18px 0 8px;
+  color: #171b46;
+  font-size: 1.1rem;
+  font-weight: 950;
+}
+
+.workspace-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.workspace-auth-required {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 18px;
+  padding: 32px;
+  background: #f6fafb;
+  text-align: center;
+}
+
+.workspace-auth-required h1 {
+  margin: 0;
+  color: #171b46;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 950;
+}
+
+.workspace-auth-required p {
+  margin: 0;
+  color: #526070;
+}
+
+.workspace-auth-required a {
+  justify-self: center;
+  border-radius: 6px;
+  background: #20245f;
+  padding: 12px 18px;
+  color: #fff;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .auth-panel,
+  .workspace-shell,
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

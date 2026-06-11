@@ -49,7 +49,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
     feature: {
       label: "平台有何不同",
       description: "从财务视角连接软件管理与付款",
-      to: "/how-cledara-is-different",
+      to: "/why/difference",
       icon: ShieldCheck,
     },
   },
@@ -65,7 +65,7 @@ export const navigationGroups: readonly NavigationGroup[] = [
       { label: "分析报表", description: "预算、续订和使用率仪表盘", to: "/solutions/analytics-and-reporting", icon: PieChart },
       { label: "会计自动化", description: "发票、收据和账务导出", to: "/solutions/accounting-automation", icon: ReceiptText },
       { label: "集成", description: "连接财务、身份和协作系统", to: "/integrations", icon: PlugZap },
-      { label: "员工参与", description: "让团队参与软件治理", to: "/solutions/cledara-engage", icon: Users },
+      { label: "员工参与", description: "让团队参与软件治理", to: "/solutions/engage", icon: Users },
       { label: "入职和离职", description: "同步工具访问和权限变更", to: "/solutions/onboarding", icon: Building2 },
       { label: "软件安全", description: "减少影子 IT 和访问风险", to: "/solutions/software-security", icon: LockKeyhole },
       { label: "合规", description: "审批、付款和审计留痕", to: "/solutions/saas-compliance", icon: ShieldCheck },
@@ -109,7 +109,7 @@ export const footerColumns = [
       { label: "采购团队", to: "/solutions/procurement" },
       { label: "IT 团队", to: "/solutions/it" },
       { label: "运营团队", to: "/solutions/operations" },
-      { label: "平台差异", to: "/how-cledara-is-different" },
+      { label: "平台差异", to: "/why/difference" },
     ],
   },
   {

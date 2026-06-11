@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import { MarketingLayout } from "../marketing/layout/MarketingLayout";
 import { ApplicationDirectoryPage } from "../marketing/pages/ApplicationDirectoryPage";
+import { AuthPage } from "../marketing/pages/AuthPage";
 import { CareerDetailPage, CareersPage } from "../marketing/pages/CareersPage";
 import { CompanyStoryPage, CambridgePage } from "../marketing/pages/CompanyStoryPage";
 import { ContactPage } from "../marketing/pages/ContactPage";
@@ -16,6 +17,7 @@ import { NotFoundPage } from "../marketing/pages/NotFoundPage";
 import { ReportPage } from "../marketing/pages/ReportPage";
 import { SecurityPage } from "../marketing/pages/SecurityPage";
 import { SupportMetricsPage } from "../marketing/pages/SupportMetricsPage";
+import { WorkspaceDashboardPage, WorkspaceSectionPage } from "../workspace/WorkspaceDashboardPage";
 import {
   legacyHashPaths,
   publicPages,
@@ -25,6 +27,8 @@ import {
 function pageElement(page: PublicPage): ReactElement {
   if (page.id === "contact") return <ContactPage />;
   if (page.id === "cambridge") return <CambridgePage />;
+  if (page.id === "login") return <AuthPage mode="login" />;
+  if (page.id === "signup") return <AuthPage mode="signup" />;
 
   switch (page.kind) {
     case "directory":
@@ -65,6 +69,9 @@ const publicRouteObjects: RouteObject[] = publicPages.flatMap(page => {
 });
 
 export const routes: RouteObject[] = [
+  { path: "/app/:organizationSlug", element: <WorkspaceDashboardPage /> },
+  { path: "/app/:organizationSlug/dashboard", element: <WorkspaceDashboardPage /> },
+  { path: "/app/:organizationSlug/:section", element: <WorkspaceSectionPage /> },
   {
     element: <MarketingLayout />,
     children: [

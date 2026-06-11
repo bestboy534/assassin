@@ -2,7 +2,9 @@
 
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
 from .domains.files.models import StoredFile
+from .domains.identity.models import User, UserSession
 from .domains.jobs.models import Job
+from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
 
 __all__ = [
@@ -10,6 +12,10 @@ __all__ = [
     "AnalysisRun",
     "InboxReceipt",
     "Job",
+    "Organization",
+    "OrganizationMember",
     "OutboxEvent",
     "StoredFile",
+    "User",
+    "UserSession",
 ]
