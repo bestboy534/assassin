@@ -31,6 +31,7 @@ import {
 } from "../app/api";
 import type { SourceHint, SubscriptionItem } from "../types";
 import { ContractRenewalSection } from "./ContractRenewalSection";
+import { VendorRiskSection } from "./VendorRiskSection";
 
 const dashboardCards = [
   ["应用总数", "连接身份目录后自动统计", BarChart3],
@@ -43,6 +44,7 @@ const workspaceNav = [
   ["总览", "dashboard"],
   ["应用目录", "applications"],
   ["采购审批", "procurement"],
+  ["供应商风险", "vendors"],
   ["合同续订", "contracts"],
   ["预算交易", "spend"],
   ["报表", "reports"],
@@ -230,6 +232,14 @@ export function WorkspaceSectionPage() {
     return (
       <WorkspaceShell activeSection="contracts" currentOrganization={workspace.currentOrganization}>
         <ContractRenewalSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "vendors") {
+    return (
+      <WorkspaceShell activeSection="vendors" currentOrganization={workspace.currentOrganization}>
+        <VendorRiskSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }

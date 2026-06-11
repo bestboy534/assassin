@@ -85,6 +85,35 @@ let renewals: Array<{
   current_amount: number;
   currency: string;
 }>;
+let vendors: Array<{
+  id: string;
+  organization_id: string;
+  name: string;
+  domain: string | null;
+  country_code: string | null;
+  category: string;
+  status: string;
+  business_owner: string | null;
+  risk_owner: string | null;
+  overall_risk_score: number | null;
+  risk_level: string;
+  created_at: string;
+}>;
+let riskFindings: Array<{
+  id: string;
+  vendor_id: string;
+  assessment_id: string;
+  dimension: string;
+  title: string;
+  description: string;
+  severity: string;
+  status: string;
+  owner_name: string;
+  due_date: string;
+  mitigation_plan: string | null;
+  accepted_reason: string | null;
+  accepted_until: string | null;
+}>;
 
 beforeEach(() => {
   applicationItems = [];
@@ -93,6 +122,8 @@ beforeEach(() => {
   approvalTasks = [];
   contracts = [];
   renewals = [];
+  vendors = [];
+  riskFindings = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -311,6 +342,105 @@ beforeEach(() => {
       renewals = [renewal, ...renewals];
       return Response.json({ contract, version, renewal });
     }
+    if (url.endsWith("/api/v1/organizations/org-1/vendors") && method === "GET") {
+      return Response.json({ items: vendors });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/risk-findings") && method === "GET") {
+      return Response.json({ items: riskFindings });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/vendors/vendor-created/assessments/latest",
+      ) &&
+      method === "GET"
+    ) {
+      return Response.json({ item: null });
+    }
+    if (url.endsWith("/api/v1/organizations/org-1/vendors") && method === "POST") {
+      const body = JSON.parse(String(init?.body));
+      const vendor = {
+        id: "vendor-created",
+        organization_id: "org-1",
+        name: body.name,
+        domain: body.domain,
+        country_code: body.country_code,
+        category: body.category,
+        status: "active",
+        business_owner: body.business_owner,
+        risk_owner: body.risk_owner,
+        overall_risk_score: null,
+        risk_level: "not_assessed",
+        created_at: "2026-06-11T10:20:00Z",
+      };
+      vendors = [vendor, ...vendors];
+      return Response.json(vendor, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/vendors/vendor-created/assessments",
+      ) &&
+      method === "POST"
+    ) {
+      const dimensions = {
+        security: { score: 80, reasons: ["未提供 SOC 2 报告"] },
+        privacy: { score: 90, reasons: ["处理敏感数据", "未提供数据处理协议"] },
+        financial: { score: 85, reasons: ["财务稳定性评估为 weak"] },
+        operational: { score: 75, reasons: ["服务关键性为 high"] },
+        compliance: { score: 80, reasons: ["合规证据缺失"] },
+      };
+      riskFindings = Object.entries(dimensions).map(([dimension, value], index) => ({
+        id: `finding-${index + 1}`,
+        vendor_id: "vendor-created",
+        assessment_id: "assessment-created",
+        dimension,
+        title: `${dimension} 风险需要处理`,
+        description: value.reasons.join("；"),
+        severity: value.score >= 80 ? "high" : "medium",
+        status: "open",
+        owner_name: "安全负责人",
+        due_date: "2026-07-11",
+        mitigation_plan: null,
+        accepted_reason: null,
+        accepted_until: null,
+      }));
+      vendors = vendors.map(item =>
+        item.id === "vendor-created"
+          ? { ...item, overall_risk_score: 82, risk_level: "high" }
+          : item,
+      );
+      return Response.json(
+        {
+          assessment: {
+            id: "assessment-created",
+            vendor_id: "vendor-created",
+            questionnaire_version: 1,
+            rule_version: "vendor-risk-v1",
+            status: "completed",
+            total_score: 82,
+            dimensions,
+            submitted_at: "2026-06-11T10:21:00Z",
+          },
+          findings: riskFindings,
+        },
+        { status: 201 },
+      );
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/risk-findings/finding-1/accept",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const accepted = {
+        ...riskFindings[0],
+        status: "accepted",
+        accepted_reason: body.reason,
+        accepted_until: body.expires_at,
+      };
+      riskFindings = [accepted, ...riskFindings.slice(1)];
+      return Response.json(accepted);
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -452,4 +582,38 @@ test("creates and signs a contract with a renewal deadline", async () => {
 
   expect(await screen.findByText("2026-12-02")).toBeVisible();
   expect(screen.getByText("2027-01-31")).toBeVisible();
+});
+
+test("creates a vendor, explains risk, and accepts a finding", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/vendors"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "供应商风险" })).toBeVisible();
+  await user.type(screen.getByLabelText("供应商名称"), "Adobe");
+  await user.type(screen.getByLabelText("官网域名"), "adobe.com");
+  await user.type(screen.getByLabelText("注册地"), "US");
+  await user.type(screen.getByLabelText("类别"), "创意软件");
+  await user.type(screen.getByLabelText("业务负责人"), "设计团队");
+  await user.type(screen.getByLabelText("风险负责人"), "安全负责人");
+  await user.click(screen.getByRole("button", { name: "保存供应商" }));
+
+  expect(await screen.findByText("Adobe")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "发起风险评估" }));
+  await user.click(screen.getByLabelText("处理敏感数据"));
+  await user.click(screen.getByRole("button", { name: "提交评估" }));
+
+  expect(await screen.findByText("风险总分 82")).toBeVisible();
+  expect(screen.getByText("安全风险需要处理")).toBeVisible();
+
+  await user.type(
+    screen.getByLabelText("接受理由"),
+    "合同期限内接受，已安排替代方案评估。",
+  );
+  await user.type(screen.getByLabelText("接受到期日"), "2027-01-31");
+  await user.click(screen.getAllByRole("button", { name: "接受风险" })[0]);
+
+  expect(await screen.findByText("已接受")).toBeVisible();
 });

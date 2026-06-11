@@ -119,6 +119,58 @@ export type ContractBundle = {
   renewal: RenewalItem | null;
 };
 
+export type VendorItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  domain: string | null;
+  country_code: string | null;
+  category: string;
+  status: string;
+  business_owner: string | null;
+  risk_owner: string | null;
+  overall_risk_score: number | null;
+  risk_level: string;
+  created_at: string;
+};
+
+export type RiskDimensionItem = {
+  score: number;
+  reasons: string[];
+};
+
+export type VendorAssessmentItem = {
+  id: string;
+  vendor_id: string;
+  questionnaire_version: number;
+  rule_version: string;
+  status: string;
+  total_score: number;
+  dimensions: Record<string, RiskDimensionItem>;
+  submitted_at: string;
+};
+
+export type RiskFindingItem = {
+  id: string;
+  vendor_id: string;
+  assessment_id: string;
+  dimension: string;
+  title: string;
+  description: string;
+  severity: string;
+  status: string;
+  owner_name: string;
+  due_date: string;
+  mitigation_plan: string | null;
+  accepted_reason: string | null;
+  accepted_until: string | null;
+};
+
+export type VendorAssessmentBundle = {
+  assessment: VendorAssessmentItem;
+  findings: RiskFindingItem[];
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -313,5 +365,85 @@ export function markContractVersionSigned(
   return request<ContractBundle>(
     `/api/v1/organizations/${organizationId}/contracts/${contractId}/versions/${versionId}/mark-signed`,
     { method: "POST" },
+  );
+}
+
+export function listVendors(organizationId: string) {
+  return request<{ items: VendorItem[] }>(
+    `/api/v1/organizations/${organizationId}/vendors`,
+  );
+}
+
+export function listRiskFindings(organizationId: string) {
+  return request<{ items: RiskFindingItem[] }>(
+    `/api/v1/organizations/${organizationId}/risk-findings`,
+  );
+}
+
+export function createVendor(
+  organizationId: string,
+  input: {
+    name: string;
+    domain: string | null;
+    country_code: string | null;
+    category: string;
+    business_owner: string | null;
+    risk_owner: string | null;
+  },
+) {
+  return request<VendorItem>(`/api/v1/organizations/${organizationId}/vendors`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createVendorAssessment(
+  organizationId: string,
+  vendorId: string,
+  input: {
+    questionnaire_version: number;
+    has_soc2: boolean;
+    has_iso27001: boolean;
+    has_dpa: boolean;
+    supports_sso: boolean;
+    has_incident_response: boolean;
+    financial_stability: "strong" | "medium" | "weak";
+    service_criticality: "low" | "medium" | "high";
+    stores_sensitive_data: boolean;
+  },
+) {
+  return request<VendorAssessmentBundle>(
+    `/api/v1/organizations/${organizationId}/vendors/${vendorId}/assessments`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function getLatestVendorAssessment(
+  organizationId: string,
+  vendorId: string,
+) {
+  return request<{ item: VendorAssessmentBundle | null }>(
+    `/api/v1/organizations/${organizationId}/vendors/${vendorId}/assessments/latest`,
+  );
+}
+
+export function acceptRiskFinding(
+  organizationId: string,
+  findingId: string,
+  input: {
+    reason: string;
+    expires_at: string;
+    risk_owner: string;
+  },
+) {
+  return request<RiskFindingItem>(
+    `/api/v1/organizations/${organizationId}/risk-findings/${findingId}/accept`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
   );
 }

@@ -9,6 +9,7 @@ from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
 from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
+from .domains.vendors.models import RiskFinding, Vendor, VendorAlias, VendorRiskAssessment
 
 __all__ = [
     "AnalysisItem",
@@ -25,8 +26,12 @@ __all__ = [
     "OrganizationMember",
     "OutboxEvent",
     "PurchaseRequest",
+    "RiskFinding",
     "Renewal",
     "StoredFile",
     "User",
     "UserSession",
+    "Vendor",
+    "VendorAlias",
+    "VendorRiskAssessment",
 ]

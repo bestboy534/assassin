@@ -3221,7 +3221,8 @@ header button[aria-label] {
 }
 
 .workspace-procurement-form input,
-.workspace-procurement-form textarea {
+.workspace-procurement-form textarea,
+.workspace-procurement-form select {
   border: 1px solid #d5e0e8;
   border-radius: 6px;
   background: #fbfdfe;
@@ -3230,6 +3231,11 @@ header button[aria-label] {
 }
 
 .workspace-procurement-form input {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.workspace-procurement-form select {
   min-height: 44px;
   padding: 0 12px;
 }
@@ -3278,6 +3284,165 @@ header button[aria-label] {
   border-radius: 6px;
   background: #fff;
   padding: 0 14px;
+  font-weight: 900;
+}
+
+.workspace-risk-assessment {
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-risk-assessment > label {
+  display: grid;
+  gap: 7px;
+  color: #171b46;
+  font-weight: 900;
+}
+
+.workspace-risk-assessment select,
+.workspace-risk-acceptance input {
+  min-height: 42px;
+  border: 1px solid #d5e0e8;
+  border-radius: 6px;
+  background: #fbfdfe;
+  padding: 0 11px;
+  color: #172033;
+  font: inherit;
+}
+
+.workspace-risk-assessment button,
+.workspace-risk-finding button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: #20245f;
+  color: #fff;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 900;
+  justify-self: start;
+}
+
+.workspace-risk-finding button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.workspace-risk-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workspace-risk-result {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  border-top: 1px solid #e9eef3;
+  padding-top: 18px;
+}
+
+.workspace-risk-score,
+.workspace-status-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-risk-score span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.workspace-risk-dimensions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workspace-risk-dimensions article {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.workspace-risk-dimensions b {
+  display: block;
+  margin-top: 4px;
+  color: #b42318;
+  font-size: 1.3rem;
+}
+
+.workspace-risk-dimensions p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.workspace-risk-findings {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+  border: 1px solid #dfe7ed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px;
+}
+
+.workspace-risk-findings h3,
+.workspace-risk-findings p {
+  margin: 0;
+}
+
+.workspace-risk-findings > div > p {
+  margin-top: 5px;
+  color: #64748b;
+}
+
+.workspace-risk-acceptance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.35fr);
+  gap: 12px;
+}
+
+.workspace-risk-acceptance label {
+  display: grid;
+  gap: 7px;
+  color: #171b46;
+  font-weight: 900;
+}
+
+.workspace-risk-finding {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-top: 1px solid #e9eef3;
+  padding-top: 14px;
+}
+
+.workspace-risk-finding strong,
+.workspace-risk-finding small {
+  display: block;
+}
+
+.workspace-risk-finding p {
+  margin-top: 5px;
+  color: #526070;
+  line-height: 1.55;
+}
+
+.workspace-risk-finding small {
+  margin-top: 6px;
+  color: #64748b;
+}
+
+.workspace-status-success {
+  color: #177245;
   font-weight: 900;
 }
 
@@ -3338,5 +3503,21 @@ header button[aria-label] {
 
   .workspace-procurement-form {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-risk-checks,
+  .workspace-risk-dimensions,
+  .workspace-risk-acceptance {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-risk-finding {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .workspace-risk-finding button,
+  .workspace-status-success {
+    grid-column: 2;
+    justify-self: start;
   }
 }

@@ -22,6 +22,7 @@ from .domains.procurement.router import (
     approval_tasks_router,
     purchase_requests_router,
 )
+from .domains.vendors.router import risk_findings_router, vendors_router
 from .infrastructure.queue.client import JobQueue, build_queue
 from .infrastructure.storage.base import ObjectStorage
 from .infrastructure.storage.factory import build_storage
@@ -79,6 +80,8 @@ app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)
 app.include_router(approval_tasks_router, prefix=settings.api_v1_prefix)
 app.include_router(contracts_router, prefix=settings.api_v1_prefix)
 app.include_router(renewals_router, prefix=settings.api_v1_prefix)
+app.include_router(vendors_router, prefix=settings.api_v1_prefix)
+app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:
