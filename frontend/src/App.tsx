@@ -6,22 +6,30 @@ import {
   BriefcaseBusiness,
   Building2,
   Calculator,
+  CalendarDays,
   Check,
   ChevronDown,
+  Clock3,
   CreditCard,
+  Download,
   FileCheck2,
   Gauge,
   Globe2,
+  Headphones,
   LayoutDashboard,
   LockKeyhole,
   Menu,
+  Minus,
   MonitorCheck,
+  Newspaper,
   PieChart,
+  Plus,
   PlugZap,
   ReceiptText,
   Search,
   ShieldCheck,
   Sparkles,
+  Star,
   TrendingDown,
   Users,
   WalletCards,
@@ -845,6 +853,74 @@ const detailPages: Record<PageId, DetailPage> = {
 
 const pageFallback = detailPages.management;
 
+type ContentEntry = {
+  title: string;
+  summary: string;
+  image: string;
+  tags: string[];
+  meta: string;
+};
+
+const podcastEntries: ContentEntry[] = [
+  {
+    title: "SaaS 播客：从增长到可持续经营",
+    summary: "与 SaaS 创始人和财务负责人讨论增长效率、软件成本，以及企业进入下一阶段时真正需要的运营纪律。",
+    image: "/assets/podcast-saas.jpeg",
+    tags: ["SaaS", "创始人访谈"],
+    meta: "播客",
+  },
+  {
+    title: "独角兽之路：如何建立高效的财务基础设施",
+    summary: "高增长公司如何在保持速度的同时建立采购、预算和软件治理体系。",
+    image: "/assets/podcast-unicorns.jpeg",
+    tags: ["财务运营", "增长"],
+    meta: "播客",
+  },
+  {
+    title: "从产品市场契合到规模化：软件栈会发生什么变化",
+    summary: "团队扩大以后，如何判断哪些工具值得续订，哪些流程应该自动化，以及怎样避免影子 IT。",
+    image: "/assets/podcast-saas.jpeg",
+    tags: ["产品", "软件管理"],
+    meta: "播客",
+  },
+];
+
+const pressEntries: ContentEntry[] = [
+  {
+    title: "软件支出管理平台完成新一轮融资，继续拓展全球市场",
+    summary: "本轮资金将用于深化产品能力、扩充团队，并帮助更多企业把软件采购、付款和治理集中到同一平台。",
+    image: "/assets/press-founder.jpeg",
+    tags: ["公司新闻", "融资"],
+    meta: "新闻稿",
+  },
+  {
+    title: "入选欧洲金融科技代表企业榜单",
+    summary: "平台凭借以财务团队为中心的软件管理体验，以及对采购和支付流程的整合获得行业认可。",
+    image: "/assets/press-fintech.jpeg",
+    tags: ["媒体报道", "金融科技"],
+    meta: "媒体",
+  },
+  {
+    title: "发布年度软件支出报告：AI 工具支出持续快速增长",
+    summary: "报告基于真实软件交易数据，展示企业应用数量、续订压力和 AI 预算变化。",
+    image: "/assets/spend-report.webp",
+    tags: ["数据报告", "AI"],
+    meta: "研究",
+  },
+];
+
+const companyValues = [
+  ["客户第一", "从财务团队每天面对的真实问题出发，做清楚、可靠、能落地的产品。"],
+  ["保持好奇", "不满足于“行业一直这样做”，持续追问有没有更简单、更透明的方法。"],
+  ["共同负责", "跨团队共享信息、明确负责人，让每一个决定都有上下文和后续。"],
+];
+
+const openRoles = [
+  ["高级产品设计师", "伦敦 / 混合办公", "产品与设计"],
+  ["客户成功经理", "纽约 / 混合办公", "客户团队"],
+  ["高级软件工程师", "巴塞罗那 / 混合办公", "工程"],
+];
+
 const logoStrip = ["Sofar", "Countingup", "trivago", "havaianas", "fever", "Bond", "Jiminny"];
 
 const appRows = [
@@ -1625,6 +1701,413 @@ function DetailVisual({ page }: { page: DetailPage }) {
   );
 }
 
+const directoryApps = [
+  ["SL", "#5b5fc7"],
+  ["NT", "#161b3d"],
+  ["FG", "#ef5da8"],
+  ["OA", "#111827"],
+  ["HB", "#ff6b35"],
+  ["AD", "#ed2224"],
+  ["ZM", "#2d8cff"],
+  ["SF", "#00a1e0"],
+  ["GH", "#24292f"],
+  ["HR", "#6a5acd"],
+  ["DB", "#0061ff"],
+  ["JR", "#0052cc"],
+];
+
+function DirectoryVisual() {
+  return (
+    <div className="directory-visual" aria-label="应用目录产品界面示意">
+      <div className="directory-window-bar">
+        <span />
+        <span />
+        <span />
+        <strong>应用目录</strong>
+      </div>
+      <div className="directory-app-grid">
+        {directoryApps.map(([label, color], index) => (
+          <div className="directory-app" key={`${label}-${index}`}>
+            <span style={{ background: color }}>{label}</span>
+            <small>{["协作", "财务", "设计", "AI", "销售", "创意"][index % 6]}</small>
+          </div>
+        ))}
+      </div>
+      <div className="directory-floating-stat stat-apps">
+        <small>应用数量</small>
+        <strong>73</strong>
+        <span>较上月 +4</span>
+      </div>
+      <div className="directory-floating-stat stat-spend">
+        <small>软件支出</small>
+        <strong>¥304,728</strong>
+        <span>本月预算内</span>
+      </div>
+    </div>
+  );
+}
+
+function DirectoryPage({ onNavigate }: { onNavigate: (id: PageId) => void }) {
+  return (
+    <>
+      <section className="official-product-hero">
+        <div className="official-product-inner">
+          <div className="official-product-copy">
+            <span className="detail-badge">
+              <LayoutDashboard className="h-4 w-4" />
+              应用目录
+            </span>
+            <h1>完整掌握每一款软件工具</h1>
+            <p>
+              在一个目录中查看成本、预算、使用者、使用率、合同和合规信息。每一款应用由谁负责、何时续订、是否真正被使用，都清清楚楚。
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button onClick={() => onNavigate("start")}>
+                开始使用 <ArrowRight className="h-4 w-4" />
+              </Button>
+              <div className="review-proof" aria-label="客户评分">
+                <span>{[0, 1, 2, 3, 4].map(star => <Star className="h-4 w-4" fill="currentColor" key={star} />)}</span>
+                <small>深受财务团队信赖</small>
+              </div>
+            </div>
+          </div>
+          <DirectoryVisual />
+        </div>
+      </section>
+
+      <section className="official-intro-section">
+        <div className="official-intro-copy">
+          <p className="eyebrow">统一软件目录</p>
+          <h2>所有软件，一处看清</h2>
+          <p>不再依赖零散表格和聊天记录。应用、负责人、付款、续订与使用情况始终保持关联。</p>
+        </div>
+        <div className="official-feature-grid">
+          {[
+            ["发现全部应用", "自动汇总正在付款和团队正在使用的软件，减少遗漏与影子 IT。"],
+            ["明确责任归属", "为每款应用设置业务负责人、部门和预算，问题出现时知道该找谁。"],
+            ["提前处理续订", "把合同日期、使用率和支出放在一起，在扣款前决定续订、降级或取消。"],
+          ].map(([title, body], index) => (
+            <article className="official-feature" key={title}>
+              <span>0{index + 1}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function SecurityLandingPage({ onNavigate }: { onNavigate: (id: PageId) => void }) {
+  return (
+    <>
+      <section className="official-product-hero security-hero">
+        <div className="official-product-inner">
+          <div className="official-product-copy">
+            <span className="detail-badge">
+              <ShieldCheck className="h-4 w-4" />
+              安全
+            </span>
+            <h1>始终认真守护你的安全</h1>
+            <p>安全不是附加功能。平台从基础设施、数据访问、身份验证到审计流程，都按照企业级标准设计和持续监控。</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button onClick={() => onNavigate("contact")}>
+                联系安全团队 <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button variant="secondary" onClick={() => onNavigate("privacy")}>查看隐私政策</Button>
+            </div>
+          </div>
+          <div className="security-console" aria-label="安全中心界面示意">
+            <div className="security-rings">
+              <span><ShieldCheck className="h-14 w-14" /></span>
+            </div>
+            <div className="security-panel">
+              <small>安全状态</small>
+              <h3>所有系统运行正常</h3>
+              {[
+                ["单点登录与多因素认证", "已启用"],
+                ["数据传输与静态加密", "受保护"],
+                ["持续监控与审计日志", "运行中"],
+              ].map(([label, status]) => (
+                <div className="security-check" key={label}>
+                  <Check className="h-4 w-4" />
+                  <span>{label}</span>
+                  <strong>{status}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="security-standards">
+        <div>
+          <p className="eyebrow">安全与合规</p>
+          <h2>用可验证的控制措施保护业务数据</h2>
+        </div>
+        <div className="security-standard-list">
+          {["SOC 2 控制框架", "GDPR 数据保护", "基于角色的访问权限", "供应商持续风险评估"].map(item => (
+            <div key={item}><ShieldCheck className="h-5 w-5" /><strong>{item}</strong></div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function StoryPage({ pageId, onNavigate }: { pageId: "about" | "careers"; onNavigate: (id: PageId) => void }) {
+  const isCareers = pageId === "careers";
+  const heroStyle = { backgroundImage: `url(${isCareers ? "/assets/careers-hero.jpg" : "/assets/about-hero.jpg"})` };
+
+  return (
+    <>
+      <section className={`story-hero ${isCareers ? "careers-story" : ""}`} style={heroStyle}>
+        <div className="story-overlay" />
+        <div className="story-content">
+          <span>{isCareers ? "招聘" : "关于我们"}</span>
+          <h1>{isCareers ? "和我们一起，建设更好的未来" : "我们的使命，是让企业与软件建立更好的关系"}</h1>
+          <p>
+            {isCareers
+              ? "加入一支跨城市、跨职能的团队，用更透明、更高效的方式改变企业购买和管理软件的体验。"
+              : "软件本应帮助团队前进，而不是制造混乱。我们让采购、付款、使用和治理回到清晰、可控的状态。"}
+          </p>
+          {isCareers && (
+            <Button className="mt-8" onClick={() => document.getElementById("open-roles")?.scrollIntoView({ behavior: "smooth" })}>
+              查看开放职位 <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </section>
+
+      {isCareers ? (
+        <section className="open-roles-section" id="open-roles">
+          <div className="open-roles-heading">
+            <p className="eyebrow">开放职位</p>
+            <h2>寻找下一位同行者</h2>
+            <p>我们重视清晰沟通、主动负责和真正关心用户体验的人。</p>
+          </div>
+          <div className="role-list">
+            {openRoles.map(([title, location, team]) => (
+              <button className="role-row" key={title} onClick={() => onNavigate("contact")} type="button">
+                <div><strong>{title}</strong><span>{team}</span></div>
+                <span>{location}</span>
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="company-values-section">
+          <div className="company-values-heading">
+            <p className="eyebrow">我们如何工作</p>
+            <h2>把复杂问题讲清楚，再认真把它做好</h2>
+          </div>
+          <div className="company-values-grid">
+            {companyValues.map(([title, body], index) => (
+              <article key={title}>
+                <span>0{index + 1}</span>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+function ContentListingPage({ kind }: { kind: "podcasts" | "press" }) {
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const entries = kind === "podcasts" ? podcastEntries : pressEntries;
+  const filteredEntries = entries.filter(entry =>
+    `${entry.title} ${entry.summary} ${entry.tags.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const Icon = kind === "podcasts" ? Headphones : Newspaper;
+
+  return (
+    <section className="content-index-page">
+      <div className="content-index-heading">
+        <span><Icon className="h-4 w-4" />{kind === "podcasts" ? "播客" : "媒体中心"}</span>
+        <h1>{kind === "podcasts" ? "播客" : "媒体报道与公司动态"}</h1>
+        <p>{kind === "podcasts" ? "收听关于 SaaS、创业、财务运营与企业增长的深度对话。" : "查看公司新闻、行业观点、媒体报道和研究发布。"}</p>
+        <label className="content-search">
+          <Search className="h-5 w-5" />
+          <input
+            aria-label={kind === "podcasts" ? "搜索播客" : "搜索媒体内容"}
+            onChange={event => setQuery(event.target.value)}
+            placeholder={kind === "podcasts" ? "搜索播客" : "搜索媒体内容"}
+            type="search"
+            value={query}
+          />
+        </label>
+      </div>
+      <div className="content-list">
+        {filteredEntries.map(entry => (
+          <article className="content-list-row" key={entry.title}>
+            <img alt="" src={entry.image} />
+            <div>
+              <small>{entry.meta}</small>
+              <h2>{entry.title}</h2>
+              <p>{entry.summary}</p>
+              {expanded === entry.title && <p className="content-expanded">内容围绕真实运营场景展开，并整理了可直接用于团队讨论的关键问题与行动建议。</p>}
+              <div className="content-row-footer">
+                <div>{entry.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
+                <button onClick={() => setExpanded(expanded === entry.title ? null : entry.title)} type="button">
+                  {expanded === entry.title ? "收起" : "了解更多"}
+                  {expanded === entry.title ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+        {filteredEntries.length === 0 && <div className="empty-search">没有找到匹配内容，请换一个关键词。</div>}
+      </div>
+    </section>
+  );
+}
+
+function ReportArticlePage({ pageId, onNavigate }: { pageId: "datahub" | "report"; onNavigate: (id: PageId) => void }) {
+  const isAi = pageId === "report";
+  const facts = isAi
+    ? [["AI 采用率", "持续上升"], ["预算变化", "从试用转向长期投入"], ["治理重点", "价值、风险与重复采购"]]
+    : [["企业应用数", "仍在增长"], ["续订压力", "预算团队更早介入"], ["主要机会", "低使用率与重复工具"]];
+
+  return (
+    <article className="report-page">
+      <header className="report-header">
+        <div className="report-meta">
+          <span><CalendarDays className="h-4 w-4" />{isAi ? "2024 年 9 月 18 日" : "2026 年 1 月 28 日"}</span>
+          <span><Clock3 className="h-4 w-4" />阅读 8 分钟</span>
+        </div>
+        <h1>{isAi ? "AI 2025：热潮背后的真实数据" : "2025 软件支出报告"}</h1>
+        <span className="report-category">{isAi ? "AI 报告" : "数据报告"}</span>
+        <p>
+          {isAi
+            ? "基于真实采购与使用数据，观察企业如何采用 AI、预算如何变化，以及团队应当怎样平衡创新速度、成本和治理。"
+            : "从真实软件交易中理解企业应用数量、支出结构和续订趋势，帮助财务团队更早发现可以行动的节省机会。"}
+        </p>
+      </header>
+      <div className="report-image-wrap">
+        <img alt="" src={isAi ? "/assets/ai-report.webp" : "/assets/spend-report.webp"} />
+      </div>
+      <section className="report-body">
+        <div>
+          <p className="eyebrow">报告摘要</p>
+          <h2>{isAi ? "从好奇试用，走向有预算、有责任人的长期采用" : "软件支出管理正在从记账，转向持续优化"}</h2>
+          <p>
+            {isAi
+              ? "真正的问题已经不再是“要不要用 AI”，而是哪些工具创造了可衡量的价值、谁负责治理，以及怎样避免同类产品重复采购。"
+              : "当合同、付款、使用率和负责人被放在同一个上下文里，团队就能在续订之前做出判断，而不是在扣款以后追查原因。"}
+          </p>
+          <Button variant="dark" onClick={() => onNavigate("contact")}>
+            获取完整报告 <Download className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="report-facts">
+          {facts.map(([label, value]) => (
+            <div key={label}><span>{label}</span><strong>{value}</strong></div>
+          ))}
+        </div>
+      </section>
+    </article>
+  );
+}
+
+function LegalDocumentPage({ pageId }: { pageId: "privacy" | "terms" }) {
+  const [openSection, setOpenSection] = useState(0);
+  const isPrivacy = pageId === "privacy";
+  const sections = isPrivacy
+    ? [
+        ["美国隐私声明", "说明我们在美国如何收集、使用、共享和保护个人信息，以及用户可以行使的访问、更正和删除权利。"],
+        ["英国及欧洲隐私声明", "说明 GDPR 适用场景下的数据处理依据、保留期限、跨境传输安排和数据主体权利。"],
+      ]
+    : [
+        ["美国服务条款", "适用于美国客户的产品使用、账户责任、付款、服务可用性、知识产权和责任限制。"],
+        ["英国及欧洲服务条款", "适用于英国及欧洲客户的合同框架、数据处理、安全责任和服务终止安排。"],
+      ];
+
+  return (
+    <section className="legal-page">
+      <header>
+        <span>{isPrivacy ? "隐私" : "法律"}</span>
+        <h1>{isPrivacy ? "隐私政策" : "服务条款"}</h1>
+        <p>{isPrivacy ? "请选择适用于你所在地区的隐私声明。" : "以下文件说明不同地区客户适用的服务约定。"}</p>
+      </header>
+      <div className="legal-sections">
+        {sections.map(([title, body], index) => {
+          const isOpen = openSection === index;
+          return (
+            <div className={`legal-accordion ${isOpen ? "is-open" : ""}`} key={title}>
+              <button aria-expanded={isOpen} onClick={() => setOpenSection(isOpen ? -1 : index)} type="button">
+                <strong>{title}</strong>
+                {isOpen ? <Minus className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+              </button>
+              {isOpen && (
+                <div className="legal-content">
+                  <p>{body}</p>
+                  <p>我们仅在提供服务、履行合同、保障安全和满足法律义务所需的范围内处理信息，并提供相应的联系与权利申请渠道。</p>
+                  {!isPrivacy && (
+                    <button type="button"><Download className="h-4 w-4" />下载完整条款</button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SupportMetricsPage({ onNavigate }: { onNavigate: (id: PageId) => void }) {
+  return (
+    <>
+      <section className="support-hero">
+        <span>服务 1,000+ 客户</span>
+        <h1>本季度客户支持指标</h1>
+        <p>我们把客户成功放在中心，通过快速、清晰且持续跟进的支持，帮助每个团队更顺利地管理软件。</p>
+        <div className="support-logos">{["incident.io", "fever", "fortnox", "mob", "charlie", "Sofar"].map(item => <strong key={item}>{item}</strong>)}</div>
+      </section>
+      <section className="support-metrics-grid">
+        {[
+          ["98%", "客户满意度"],
+          ["2 分钟", "工作时段首次响应中位数"],
+          ["92%", "首次联系解决率"],
+          ["全天候", "紧急问题支持"],
+        ].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
+        <Button variant="dark" onClick={() => onNavigate("contact")}>联系支持团队 <ArrowRight className="h-4 w-4" /></Button>
+      </section>
+    </>
+  );
+}
+
+function RoutedDetailPage({ page, onNavigate }: { page: DetailPage; onNavigate: (id: PageId) => void }) {
+  switch (page.id) {
+    case "directory":
+      return <DirectoryPage onNavigate={onNavigate} />;
+    case "companySecurity":
+      return <SecurityLandingPage onNavigate={onNavigate} />;
+    case "about":
+    case "careers":
+      return <StoryPage pageId={page.id} onNavigate={onNavigate} />;
+    case "podcasts":
+    case "press":
+      return <ContentListingPage kind={page.id} />;
+    case "datahub":
+    case "report":
+      return <ReportArticlePage pageId={page.id} onNavigate={onNavigate} />;
+    case "privacy":
+    case "terms":
+      return <LegalDocumentPage pageId={page.id} />;
+    case "support":
+      return <SupportMetricsPage onNavigate={onNavigate} />;
+    default:
+      return <DetailPageView page={page} onNavigate={onNavigate} />;
+  }
+}
+
 function DetailPageView({ page, onNavigate }: { page: DetailPage; onNavigate: (id: PageId) => void }) {
   const Icon = page.icon;
 
@@ -1817,7 +2300,7 @@ export default function App() {
     <main className="min-h-screen bg-white text-slate-950">
       <Announcement onNavigate={handleNavigate} />
       <Nav currentPage={currentPage} onNavigate={handleNavigate} />
-      {detailPage ? <DetailPageView page={detailPage} onNavigate={handleNavigate} /> : <HomePage onNavigate={handleNavigate} />}
+      {detailPage ? <RoutedDetailPage page={detailPage} onNavigate={handleNavigate} /> : <HomePage onNavigate={handleNavigate} />}
       <Footer onNavigate={handleNavigate} />
     </main>
   );
