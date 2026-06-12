@@ -26,6 +26,7 @@ from .domains.procurement.router import (
     approval_tasks_router,
     purchase_requests_router,
 )
+from .domains.reports.router import router as reports_router
 from .domains.savings.router import router as savings_router
 from .domains.spend.router import router as spend_router
 from .domains.vendors.router import risk_findings_router, vendors_router
@@ -92,6 +93,7 @@ app.include_router(vendors_router, prefix=settings.api_v1_prefix)
 app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 app.include_router(spend_router, prefix=settings.api_v1_prefix)
 app.include_router(savings_router, prefix=settings.api_v1_prefix)
+app.include_router(reports_router, prefix=settings.api_v1_prefix)
 app.include_router(payments_router, prefix=settings.api_v1_prefix)
 app.include_router(payment_webhook_router, prefix=settings.api_v1_prefix)
 

@@ -37,6 +37,13 @@ from .domains.payments.models import (
     PaymentRequest,
 )
 from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
+from .domains.reports.models import (
+    ReportExport,
+    ReportShare,
+    ReportSnapshot,
+    ReportSubscription,
+    SavedReport,
+)
 from .domains.savings.models import (
     OptimizationProject,
     OptimizationTask,
@@ -95,9 +102,14 @@ __all__ = [
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",
+    "ReportExport",
+    "ReportShare",
+    "ReportSnapshot",
+    "ReportSubscription",
     "SavingsBaseline",
     "SavingsOpportunity",
     "SavingsResult",
+    "SavedReport",
     "StoredFile",
     "SpendTransaction",
     "SyncCursor",

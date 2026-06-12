@@ -32,6 +32,6 @@ jobs:
       - run: python -m mypy app
       - run: alembic upgrade head
         env:
-          DATABASE_URL: sqlite+aiosqlite:///./data/ci.db
+          DATABASE_URL: sqlite+aiosqlite:///backend/data/saas_assassin.db
       - run: docker compose config
         working-directory: .
