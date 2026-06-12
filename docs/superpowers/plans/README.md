@@ -37,7 +37,7 @@
 | 16 | [发票与会计自动化](./16-invoices-accounting.md) | OCR、发票、匹配、科目映射、会计导出 | 09、13、14 | 核心已验证 |
 | 17 | [集成平台](./17-integrations-sync-platform.md) | OAuth、凭证、同步框架、首批适配器 | 04、06 | 部分实现 |
 | 18 | [报表与导出](./18-reporting-exports.md) | 指标定义、分析查询、保存报表、定时导出 | 08-17 | 核心已验证 |
-| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 部分实现（3/7） |
+| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 部分实现（4/7） |
 | 20 | [套餐、计费与权益](./20-platform-billing-entitlements.md) | 套餐、订阅、权益、用量、账单门户 | 06、15 | 待开发 |
 | 21 | [支持、状态页与管理后台](./21-support-status-admin.md) | 工单、诊断授权、状态事件、平台运营后台 | 03-20 | 待开发 |
 | 22 | [可观测性与生产发布](./22-observability-production-release.md) | 日志、追踪、告警、性能、安全、灾备、发布 | 01-21 | 待开发 |
@@ -88,4 +88,13 @@ docker compose run --rm backend alembic upgrade head
 ```
 
 预期结果：所有命令退出码为 `0`，E2E 报告中无失败用例，迁移可在空数据库和已有上一版本数据库上执行。
+
+## 2026-06-12 验证快照
+
+- 01-22 均未达到各自完整验收清单，汇总为 `7` 个核心已验证、`12` 个部分实现、`3` 个待开发。
+- Plan 19 已完成不可变审计、数据保留与删除、数据主体请求、合规控制与证据库，共 `4/7` 个任务。
+- 后端全量测试 `61 passed`，Ruff 通过，Mypy 对 `126` 个源文件通过。
+- 前端 TypeScript 类型检查通过，Vitest `77 passed`，Vite 生产构建通过。
+- Alembic head 为 `20260612_0017`，空数据库升级集成测试通过。
+- 尚不存在前端 lint、Playwright E2E、性能、安全扫描和 production-like staging 验收入口，因此所有计划都不能标记为“全部完成”。
 

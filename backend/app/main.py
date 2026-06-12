@@ -14,6 +14,7 @@ from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.accounting.router import router as accounting_router
 from .domains.applications.router import router as applications_router
 from .domains.audit_ai.router import router as billing_audit_router
+from .domains.compliance.control_router import controls_router, incidents_router
 from .domains.compliance.router import audit_logs_router, privacy_router, retention_router
 from .domains.contracts.router import contracts_router, renewals_router
 from .domains.files.router import router as files_router
@@ -98,6 +99,8 @@ app.include_router(reports_router, prefix=settings.api_v1_prefix)
 app.include_router(audit_logs_router, prefix=settings.api_v1_prefix)
 app.include_router(retention_router, prefix=settings.api_v1_prefix)
 app.include_router(privacy_router, prefix=settings.api_v1_prefix)
+app.include_router(controls_router, prefix=settings.api_v1_prefix)
+app.include_router(incidents_router, prefix=settings.api_v1_prefix)
 app.include_router(payments_router, prefix=settings.api_v1_prefix)
 app.include_router(payment_webhook_router, prefix=settings.api_v1_prefix)
 

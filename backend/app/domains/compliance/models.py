@@ -2,7 +2,18 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DDL, JSON, DateTime, ForeignKey, Integer, String, Uuid, event, func
+from sqlalchemy import (
+    DDL,
+    JSON,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    Uuid,
+    event,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -192,6 +203,261 @@ class PrivacyRequestAction(Base):
         server_default=func.now(),
     )
     privacy_request: Mapped[PrivacyRequest] = relationship(back_populates="actions")
+
+
+class ComplianceFramework(Base):
+    __tablename__ = "compliance_frameworks"
+    __table_args__ = (
+        UniqueConstraint(
+            "organization_id",
+            "code",
+            "version",
+            name="uq_compliance_framework_org_code_version",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    created_by_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    version: Mapped[str] = mapped_column(String(80), nullable=False)
+    description: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    controls: Mapped[list["ComplianceControl"]] = relationship(
+        back_populates="framework",
+        cascade="all, delete-orphan",
+    )
+
+
+class ComplianceControl(Base):
+    __tablename__ = "compliance_controls"
+    __table_args__ = (
+        UniqueConstraint(
+            "framework_id",
+            "code",
+            name="uq_compliance_control_framework_code",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    framework_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("compliance_frameworks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    code: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str] = mapped_column(String(3000), nullable=False, default="")
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="not_assessed",
+        index=True,
+    )
+    frequency_days: Mapped[int] = mapped_column(Integer, nullable=False, default=90)
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    next_review_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    framework: Mapped[ComplianceFramework] = relationship(back_populates="controls")
+    owners: Mapped[list["ControlOwner"]] = relationship(
+        back_populates="control",
+        cascade="all, delete-orphan",
+    )
+    evidence: Mapped[list["ControlEvidence"]] = relationship(
+        back_populates="control",
+        cascade="all, delete-orphan",
+    )
+    reviews: Mapped[list["ControlReview"]] = relationship(
+        back_populates="control",
+        cascade="all, delete-orphan",
+    )
+
+
+class ControlOwner(Base):
+    __tablename__ = "control_owners"
+    __table_args__ = (
+        UniqueConstraint(
+            "control_id",
+            "user_id",
+            "role",
+            name="uq_control_owner_role",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    control_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("compliance_controls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(32), nullable=False, default="owner", index=True)
+    assigned_by_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    control: Mapped[ComplianceControl] = relationship(back_populates="owners")
+
+
+class ControlEvidence(Base):
+    __tablename__ = "control_evidence"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    control_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("compliance_controls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stored_file_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("files.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    uploaded_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="active", index=True)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    control: Mapped[ComplianceControl] = relationship(back_populates="evidence")
+
+
+class ControlReview(Base):
+    __tablename__ = "control_reviews"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    control_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("compliance_controls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    reviewer_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    outcome: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    notes: Mapped[str] = mapped_column(String(3000), nullable=False, default="")
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    next_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    control: Mapped[ComplianceControl] = relationship(back_populates="reviews")
+
+
+class SecurityIncident(Base):
+    __tablename__ = "security_incidents"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    created_by_user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    severity: Mapped[str] = mapped_column(String(24), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="open", index=True)
+    summary: Mapped[str] = mapped_column(String(4000), nullable=False)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    tasks: Mapped[list["IncidentTask"]] = relationship(
+        back_populates="incident",
+        cascade="all, delete-orphan",
+    )
+
+
+class IncidentTask(Base):
+    __tablename__ = "incident_tasks"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    organization_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    incident_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("security_incidents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="open", index=True)
+    assignee_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        nullable=True,
+        index=True,
+    )
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    incident: Mapped[SecurityIncident] = relationship(back_populates="tasks")
 
 
 event.listen(

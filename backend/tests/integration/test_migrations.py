@@ -56,5 +56,12 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "deletion_job_items",
         "privacy_requests",
         "privacy_request_actions",
+        "compliance_frameworks",
+        "compliance_controls",
+        "control_owners",
+        "control_evidence",
+        "control_reviews",
+        "security_incidents",
+        "incident_tasks",
     } <= tables
-    assert version == ("20260612_0016",)
+    assert version == ("20260612_0017",)
