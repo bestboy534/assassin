@@ -13,6 +13,7 @@ from .domains.accounting.models import (
 )
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
+from .domains.compliance.models import AuditLog
 from .domains.contracts.models import Contract, ContractVersion, Renewal
 from .domains.files.models import StoredFile
 from .domains.identity.models import User, UserSession
@@ -66,6 +67,7 @@ __all__ = [
     "AccountingMapping",
     "AnalysisItem",
     "AnalysisRun",
+    "AuditLog",
     "AccountingPeriod",
     "AccountingSyncRecord",
     "Application",

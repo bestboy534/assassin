@@ -49,5 +49,6 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "report_snapshots",
         "report_exports",
         "report_subscriptions",
+        "audit_logs",
     } <= tables
-    assert version == ("20260612_0013",)
+    assert version == ("20260612_0014",)
