@@ -375,6 +375,26 @@ let syncRunsByConnection: Record<
     }>;
   }>
 >;
+let savedReports: Array<{
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string;
+  query: Record<string, unknown>;
+  chart_type: string;
+  visibility: string;
+  created_at: string;
+  updated_at: string;
+}>;
+let reportSnapshotPayload: {
+  metrics: string[];
+  group_by: string[];
+  rows: Array<{
+    dimensions: Record<string, string>;
+    metrics: Record<string, string>;
+  }>;
+  generated_at: string;
+};
 
 beforeEach(() => {
   applicationItems = [];
@@ -417,11 +437,151 @@ beforeEach(() => {
   ];
   integrationConnections = [];
   syncRunsByConnection = {};
+  savedReports = [];
+  reportSnapshotPayload = {
+    metrics: ["monthly_spend"],
+    group_by: ["department"],
+    rows: [
+      {
+        dimensions: { department: "Design" },
+        metrics: { monthly_spend: "300.0000" },
+      },
+      {
+        dimensions: { department: "IT" },
+        metrics: { monthly_spend: "100.0000" },
+      },
+    ],
+    generated_at: "2026-06-12T10:00:00Z",
+  };
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
     if (url.endsWith("/api/v1/auth/me")) {
       return Response.json(session);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/metrics") &&
+      method === "GET"
+    ) {
+      return Response.json({
+        items: [
+          {
+            key: "monthly_spend",
+            label: "月度支出",
+            description: "按期间统计软件支出",
+            value_type: "money",
+            required_permission: "reports.spend.read",
+            dimensions: ["department", "category", "currency"],
+          },
+          {
+            key: "verified_savings",
+            label: "已验证节省",
+            description: "只统计已验证节省",
+            value_type: "money",
+            required_permission: "reports.savings.read",
+            dimensions: ["status"],
+          },
+        ],
+      });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/dimensions") &&
+      method === "GET"
+    ) {
+      return Response.json({
+        items: [
+          { key: "department", label: "部门" },
+          { key: "category", label: "类别" },
+          { key: "currency", label: "币种" },
+        ],
+      });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/saved-reports") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: savedReports });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/query") &&
+      method === "POST"
+    ) {
+      return Response.json(reportSnapshotPayload);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/saved-reports") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const report = {
+        id: "report-created",
+        organization_id: "org-1",
+        name: body.name,
+        description: body.description,
+        query: body.query,
+        chart_type: body.chart_type,
+        visibility: body.visibility,
+        created_at: "2026-06-12T10:01:00Z",
+        updated_at: "2026-06-12T10:01:00Z",
+      };
+      savedReports = [report, ...savedReports];
+      return Response.json(report, { status: 201 });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/saved-reports/report-created/snapshots") &&
+      method === "POST"
+    ) {
+      return Response.json(
+        {
+          id: "snapshot-created",
+          saved_report_id: "report-created",
+          payload: reportSnapshotPayload,
+          created_at: "2026-06-12T10:02:00Z",
+        },
+        { status: 201 },
+      );
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/reports/saved-reports/report-created/exports") &&
+      method === "POST"
+    ) {
+      return Response.json(
+        {
+          id: "export-created",
+          job_id: "job-report-export",
+          saved_report_id: "report-created",
+          format: "xlsx",
+          status: "succeeded",
+          row_count: 2,
+          filename: "report-created.xlsx",
+          download_url: "/api/v1/organizations/org-1/reports/exports/export-created/download?token=ok",
+          expires_at: "2026-06-12T10:17:00Z",
+          created_at: "2026-06-12T10:02:30Z",
+        },
+        { status: 201 },
+      );
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/reports/saved-reports/report-created/subscriptions",
+      ) &&
+      method === "POST"
+    ) {
+      return Response.json(
+        {
+          id: "subscription-created",
+          saved_report_id: "report-created",
+          frequency: "monthly",
+          cron: "0 9 1 * *",
+          timezone: "Asia/Hong_Kong",
+          recipients: ["finance@example.com"],
+          status: "active",
+          next_run_at: "2026-07-01T01:00:00+00:00",
+          failure_count: 0,
+          created_at: "2026-06-12T10:03:00Z",
+        },
+        { status: 201 },
+      );
     }
     if (url.endsWith("/api/v1/organizations/org-1/applications") && method === "GET") {
       return Response.json({
@@ -2029,6 +2189,37 @@ test("reviews, matches, maps, exports, and resyncs an invoice", async () => {
   expect(await screen.findByText("本地数据已变更，等待重新同步")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "重新同步" }));
   expect(await screen.findByText("已同步到 Sandbox 会计系统")).toBeVisible();
+});
+
+test("builds, saves, snapshots, exports, and subscribes to a report", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/reports"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "报表" })).toBeVisible();
+  await user.selectOptions(screen.getByLabelText("指标"), "monthly_spend");
+  await user.selectOptions(screen.getByLabelText("分组维度"), "department");
+  await user.click(screen.getByRole("button", { name: "运行查询" }));
+
+  expect(await screen.findByText("Design")).toBeVisible();
+  expect(screen.getByText("$300.00")).toBeVisible();
+  expect(screen.getByText("IT")).toBeVisible();
+
+  await user.type(screen.getByLabelText("报表名称"), "部门支出报表");
+  await user.click(screen.getByRole("button", { name: "保存报表" }));
+  expect(await screen.findByText("已保存报表")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "创建快照" }));
+  expect(await screen.findByText("快照已创建")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "导出 XLSX" }));
+  expect(await screen.findByText("导出已生成")).toBeVisible();
+  expect(screen.getByText("report-created.xlsx")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "创建月度订阅" }));
+  expect(await screen.findByText("下次发送 2026-07-01 01:00 UTC")).toBeVisible();
 });
 
 test("connects, syncs, diagnoses, pauses, resumes, and deletes an integration", async () => {

@@ -36,6 +36,7 @@ import { ContractRenewalSection } from "./ContractRenewalSection";
 import { IntegrationCenterSection } from "./IntegrationCenterSection";
 import { InvoiceAccountingSection } from "./InvoiceAccountingSection";
 import { PaymentInstrumentSection } from "./PaymentInstrumentSection";
+import { ReportWorkspaceSection } from "./ReportWorkspaceSection";
 import { SavingsOptimizationSection } from "./SavingsOptimizationSection";
 import { VendorRiskSection } from "./VendorRiskSection";
 
@@ -302,6 +303,14 @@ export function WorkspaceSectionPage() {
         currentOrganization={workspace.currentOrganization}
       >
         <IntegrationCenterSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "reports") {
+    return (
+      <WorkspaceShell activeSection="reports" currentOrganization={workspace.currentOrganization}>
+        <ReportWorkspaceSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }

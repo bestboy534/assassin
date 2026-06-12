@@ -4863,6 +4863,161 @@ header button[aria-label] {
   font-size: 0.84rem;
 }
 
+.workspace-reports {
+  display: grid;
+  gap: 24px;
+}
+
+.workspace-report-band {
+  min-width: 0;
+  border-top: 1px solid #dfe7ed;
+  padding-top: 24px;
+}
+
+.workspace-report-builder,
+.workspace-report-save {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.workspace-report-save {
+  grid-template-columns: minmax(220px, 420px) auto;
+}
+
+.workspace-report-builder label,
+.workspace-report-save label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: #171b46;
+  font-weight: 900;
+}
+
+.workspace-report-builder label span,
+.workspace-report-save label span {
+  font-size: 0.86rem;
+}
+
+.workspace-report-builder input,
+.workspace-report-builder select,
+.workspace-report-save input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #d5e0e8;
+  border-radius: 6px;
+  background: #fbfdfe;
+  padding: 0 11px;
+  color: #172033;
+  font: inherit;
+}
+
+.workspace-report-builder button,
+.workspace-report-save button,
+.workspace-report-actions button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: #20245f;
+  color: #fff;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.workspace-report-builder button:disabled,
+.workspace-report-save button:disabled,
+.workspace-report-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.workspace-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.workspace-report-actions svg {
+  width: 16px;
+  height: 16px;
+}
+
+.workspace-report-table {
+  margin-top: 0;
+}
+
+.workspace-reports-success {
+  margin: 0;
+  border: 1px solid #b8e8cf;
+  border-radius: 6px;
+  background: #f0fbf5;
+  padding: 12px 14px;
+  color: #177245;
+  font-weight: 900;
+}
+
+.workspace-report-artifacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.workspace-report-artifacts span,
+.workspace-report-list button span {
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.workspace-report-artifacts span {
+  border: 1px solid #dfe7ed;
+  border-radius: 999px;
+  background: #f8fbfc;
+  padding: 7px 10px;
+}
+
+.workspace-report-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.workspace-report-list button {
+  border: 1px solid #dfe7ed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+  text-align: left;
+}
+
+.workspace-report-list button[aria-pressed="true"] {
+  border-color: #1aa4ad;
+  background: #f2fbfb;
+}
+
+.workspace-report-list button strong,
+.workspace-report-list button span {
+  display: block;
+}
+
+.workspace-report-list button strong {
+  color: #171b46;
+  font-weight: 950;
+}
+
+.workspace-report-list button span {
+  margin-top: 5px;
+}
+
 .workspace-auth-required {
   min-height: 100vh;
   display: grid;
@@ -4951,6 +5106,8 @@ header button[aria-label] {
   .workspace-invoice-adjustment,
   .workspace-integration-definitions,
   .workspace-integration-form,
+  .workspace-report-builder,
+  .workspace-report-save,
   .workspace-budget-summary,
   .workspace-budget-metrics,
   .workspace-spend-list > article,
@@ -5075,7 +5232,10 @@ header button[aria-label] {
   }
 
   .workspace-integration-form button,
-  .workspace-integration-actions button {
+  .workspace-integration-actions button,
+  .workspace-report-builder button,
+  .workspace-report-save button,
+  .workspace-report-actions button {
     width: 100%;
   }
 

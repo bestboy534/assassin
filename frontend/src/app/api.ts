@@ -472,6 +472,92 @@ export type IntegrationSyncRunItem = {
   }>;
 };
 
+export type ReportMetricDefinitionItem = {
+  key: string;
+  label: string;
+  description: string;
+  value_type: "money" | "number" | "percentage" | "duration" | string;
+  required_permission: string;
+  dimensions: string[];
+};
+
+export type ReportDimensionItem = {
+  key: string;
+  label: string;
+};
+
+export type ReportQueryPayload = {
+  metrics: string[];
+  date_range: {
+    start: string;
+    end: string;
+  };
+  group_by: string[];
+  filters: Array<{
+    dimension: string;
+    operator: "equals" | "in";
+    value: string | string[];
+  }>;
+  comparison?: "previous_period" | "previous_year" | null;
+};
+
+export type ReportRowItem = {
+  dimensions: Record<string, string>;
+  metrics: Record<string, string>;
+};
+
+export type ReportQueryResult = {
+  metrics: string[];
+  group_by: string[];
+  rows: ReportRowItem[];
+  generated_at: string;
+};
+
+export type SavedReportItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string;
+  query: ReportQueryPayload;
+  chart_type: string;
+  visibility: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ReportSnapshotItem = {
+  id: string;
+  saved_report_id: string;
+  payload: ReportQueryResult;
+  created_at: string;
+};
+
+export type ReportExportItem = {
+  id: string;
+  job_id: string;
+  saved_report_id: string;
+  format: string;
+  status: string;
+  row_count: number;
+  filename: string;
+  download_url: string;
+  expires_at: string;
+  created_at: string;
+};
+
+export type ReportSubscriptionItem = {
+  id: string;
+  saved_report_id: string;
+  frequency: string;
+  cron: string;
+  timezone: string;
+  recipients: string[];
+  status: string;
+  next_run_at: string;
+  failure_count: number;
+  created_at: string;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -1313,5 +1399,92 @@ export function deleteIntegrationConnection(
   return request<{ status: "deleted"; data_retention: "retain_synced_data" }>(
     `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}`,
     { method: "DELETE" },
+  );
+}
+
+export function listReportMetrics(organizationId: string) {
+  return request<{ items: ReportMetricDefinitionItem[] }>(
+    `/api/v1/organizations/${organizationId}/reports/metrics`,
+  );
+}
+
+export function listReportDimensions(organizationId: string) {
+  return request<{ items: ReportDimensionItem[] }>(
+    `/api/v1/organizations/${organizationId}/reports/dimensions`,
+  );
+}
+
+export function queryReport(organizationId: string, input: ReportQueryPayload) {
+  return request<ReportQueryResult>(
+    `/api/v1/organizations/${organizationId}/reports/query`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function listSavedReports(organizationId: string) {
+  return request<{ items: SavedReportItem[] }>(
+    `/api/v1/organizations/${organizationId}/reports/saved-reports`,
+  );
+}
+
+export function createSavedReport(
+  organizationId: string,
+  input: {
+    name: string;
+    description: string;
+    query: ReportQueryPayload;
+    chart_type: "table" | "bar" | "line" | "area" | "donut";
+    visibility: "private" | "organization" | "role" | "member";
+  },
+) {
+  return request<SavedReportItem>(
+    `/api/v1/organizations/${organizationId}/reports/saved-reports`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function createReportSnapshot(organizationId: string, reportId: string) {
+  return request<ReportSnapshotItem>(
+    `/api/v1/organizations/${organizationId}/reports/saved-reports/${reportId}/snapshots`,
+    { method: "POST" },
+  );
+}
+
+export function createReportExport(
+  organizationId: string,
+  reportId: string,
+  format: "csv" | "xlsx" | "pdf",
+) {
+  return request<ReportExportItem>(
+    `/api/v1/organizations/${organizationId}/reports/saved-reports/${reportId}/exports`,
+    {
+      method: "POST",
+      body: JSON.stringify({ format }),
+    },
+  );
+}
+
+export function createReportSubscription(
+  organizationId: string,
+  reportId: string,
+  input: {
+    frequency: "daily" | "weekly" | "monthly";
+    cron: string;
+    timezone: string;
+    recipients: string[];
+  },
+) {
+  return request<ReportSubscriptionItem>(
+    `/api/v1/organizations/${organizationId}/reports/saved-reports/${reportId}/subscriptions`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
   );
 }
