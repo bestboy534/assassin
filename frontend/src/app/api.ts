@@ -340,6 +340,86 @@ export type PaymentInstrumentBundle = {
   };
 };
 
+export type InvoiceLineItem = {
+  id: string;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  amount: string;
+  category: string;
+};
+
+export type InvoiceBundle = {
+  invoice: {
+    id: string;
+    organization_id: string;
+    vendor_name: string;
+    invoice_number: string;
+    invoice_date: string;
+    due_date: string;
+    currency: string;
+    subtotal: string;
+    tax: string;
+    total: string;
+    purchase_order_number: string;
+    status: string;
+    exception_codes: string[];
+    duplicate_of_id: string | null;
+    current_version: number;
+    filename: string;
+    created_at: string;
+  };
+  line_items: InvoiceLineItem[];
+  extraction: {
+    provider: string;
+    status: string;
+    fields: Record<string, unknown>;
+  } | null;
+  match: {
+    id: string;
+    vendor_id: string | null;
+    contract_id: string | null;
+    transaction_id: string | null;
+    application_id: string | null;
+    purchase_request_id: string | null;
+    confidence: string;
+    status: string;
+    explanation: Record<string, unknown>;
+  } | null;
+  export: {
+    id: string;
+    invoice_id: string;
+    provider: string;
+    status: string;
+    external_id: string | null;
+    external_version: number | null;
+    exported_invoice_version: number | null;
+    diff: Record<string, unknown>;
+    attempts: number;
+  } | null;
+};
+
+export type AccountingMappingItem = {
+  id: string;
+  scope_type: string;
+  scope_value: string;
+  account_code: string;
+  tax_code: string;
+  cost_center: string;
+  department: string;
+  project: string;
+};
+
+export type ResolvedAccountingMapping = {
+  mapping_id: string;
+  resolved_scope_type: string;
+  account_code: string;
+  tax_code: string;
+  cost_center: string;
+  department: string;
+  project: string;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -949,6 +1029,148 @@ export function closePaymentInstrument(
 ) {
   return request<PaymentInstrumentBundle>(
     `/api/v1/organizations/${organizationId}/payment-instruments/${instrumentId}/close`,
+    { method: "POST" },
+  );
+}
+
+export function listInvoices(organizationId: string) {
+  return request<{ items: InvoiceBundle[] }>(
+    `/api/v1/organizations/${organizationId}/invoices`,
+  );
+}
+
+export function extractInvoice(
+  organizationId: string,
+  input: {
+    source_type: "manual_text" | "email" | "api" | "integration";
+    external_id: string;
+    filename: string;
+    text: string;
+  },
+  idempotencyKey: string,
+) {
+  return request<InvoiceBundle>(
+    `/api/v1/organizations/${organizationId}/invoices/extract`,
+    {
+      method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function confirmInvoice(
+  organizationId: string,
+  invoiceId: string,
+  input: {
+    vendor_name: string;
+    invoice_number: string;
+    invoice_date: string;
+    due_date: string;
+    currency: "USD";
+    subtotal: string;
+    tax: string;
+    total: string;
+    purchase_order_number: string;
+    line_items: Array<{
+      description: string;
+      quantity: string;
+      unit_price: string;
+      amount: string;
+      category: string;
+    }>;
+  },
+) {
+  return request<InvoiceBundle>(
+    `/api/v1/organizations/${organizationId}/invoices/${invoiceId}/confirm`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function matchInvoice(organizationId: string, invoiceId: string) {
+  return request<InvoiceBundle>(
+    `/api/v1/organizations/${organizationId}/invoices/${invoiceId}/match`,
+    { method: "POST" },
+  );
+}
+
+export function listAccountingMappings(organizationId: string) {
+  return request<{ items: AccountingMappingItem[] }>(
+    `/api/v1/organizations/${organizationId}/accounting-mappings`,
+  );
+}
+
+export function upsertAccountingMapping(
+  organizationId: string,
+  input: {
+    scope_type: "application" | "vendor" | "category" | "default";
+    scope_value: string;
+    account_code: string;
+    tax_code: string;
+    cost_center: string;
+    department: string;
+    project: string;
+  },
+) {
+  return request<AccountingMappingItem>(
+    `/api/v1/organizations/${organizationId}/accounting-mappings`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function resolveInvoiceMapping(
+  organizationId: string,
+  invoiceId: string,
+) {
+  return request<ResolvedAccountingMapping>(
+    `/api/v1/organizations/${organizationId}/invoices/${invoiceId}/mapping`,
+  );
+}
+
+export function exportInvoice(
+  organizationId: string,
+  invoiceId: string,
+  idempotencyKey: string,
+) {
+  return request<InvoiceBundle>(
+    `/api/v1/organizations/${organizationId}/invoices/${invoiceId}/export`,
+    {
+      method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey },
+    },
+  );
+}
+
+export function updateInvoice(
+  organizationId: string,
+  invoiceId: string,
+  input: {
+    subtotal?: string;
+    tax?: string;
+    total?: string;
+  },
+) {
+  return request<InvoiceBundle>(
+    `/api/v1/organizations/${organizationId}/invoices/${invoiceId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function retryAccountingExport(
+  organizationId: string,
+  exportId: string,
+) {
+  return request<NonNullable<InvoiceBundle["export"]>>(
+    `/api/v1/organizations/${organizationId}/accounting-exports/${exportId}/retry`,
     { method: "POST" },
   );
 }

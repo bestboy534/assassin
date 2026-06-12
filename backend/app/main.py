@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config import get_settings
 from .core.database import get_database
 from .database import get_history_run, list_history_runs, save_analysis_run
+from .domains.accounting.router import router as accounting_router
 from .domains.applications.router import router as applications_router
 from .domains.audit_ai.router import router as billing_audit_router
 from .domains.contracts.router import contracts_router, renewals_router
@@ -78,6 +79,7 @@ app.include_router(jobs_router, prefix=settings.api_v1_prefix)
 app.include_router(files_router, prefix=settings.api_v1_prefix)
 app.include_router(identity_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
+app.include_router(accounting_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
 app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)

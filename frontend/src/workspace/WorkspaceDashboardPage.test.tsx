@@ -256,6 +256,72 @@ let paymentInstruments: Array<{
     total: string;
   };
 }>;
+let invoiceBundles: Array<{
+  invoice: {
+    id: string;
+    organization_id: string;
+    vendor_name: string;
+    invoice_number: string;
+    invoice_date: string;
+    due_date: string;
+    currency: string;
+    subtotal: string;
+    tax: string;
+    total: string;
+    purchase_order_number: string;
+    status: string;
+    exception_codes: string[];
+    duplicate_of_id: string | null;
+    current_version: number;
+    filename: string;
+    created_at: string;
+  };
+  line_items: Array<{
+    id: string;
+    description: string;
+    quantity: string;
+    unit_price: string;
+    amount: string;
+    category: string;
+  }>;
+  extraction: {
+    provider: string;
+    status: string;
+    fields: Record<string, unknown>;
+  } | null;
+  match: {
+    id: string;
+    vendor_id: string | null;
+    contract_id: string | null;
+    transaction_id: string | null;
+    application_id: string | null;
+    purchase_request_id: string | null;
+    confidence: string;
+    status: string;
+    explanation: Record<string, boolean>;
+  } | null;
+  export: {
+    id: string;
+    invoice_id: string;
+    provider: string;
+    status: string;
+    external_id: string | null;
+    external_version: number | null;
+    exported_invoice_version: number | null;
+    diff: Record<string, unknown>;
+    attempts: number;
+  } | null;
+}>;
+let accountingMappings: Array<{
+  id: string;
+  scope_type: string;
+  scope_value: string;
+  account_code: string;
+  tax_code: string;
+  cost_center: string;
+  department: string;
+  project: string;
+}>;
 
 beforeEach(() => {
   applicationItems = [];
@@ -281,6 +347,8 @@ beforeEach(() => {
     cost_avoidance: "0.0000",
   };
   paymentInstruments = [];
+  invoiceBundles = [];
+  accountingMappings = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -1066,6 +1134,211 @@ beforeEach(() => {
       }));
       return Response.json(paymentInstruments[0]);
     }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/invoices") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: invoiceBundles });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/accounting-mappings") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: accountingMappings });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/invoices/extract") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const bundle = {
+        invoice: {
+          id: "invoice-created",
+          organization_id: "org-1",
+          vendor_name: "Notion Labs",
+          invoice_number: "INV-2026-001",
+          invoice_date: "2026-07-10",
+          due_date: "2026-08-09",
+          currency: "USD",
+          subtotal: "100.0000",
+          tax: "15.0000",
+          total: "118.0000",
+          purchase_order_number: "",
+          status: "review_required",
+          exception_codes: ["amount_imbalance"],
+          duplicate_of_id: null,
+          current_version: 1,
+          filename: body.filename,
+          created_at: "2026-07-10T09:00:00Z",
+        },
+        line_items: [
+          {
+            id: "line-created",
+            description: "Notion enterprise subscription",
+            quantity: "1.0000",
+            unit_price: "118.0000",
+            amount: "118.0000",
+            category: "software",
+          },
+        ],
+        extraction: {
+          provider: "fake_ocr",
+          status: "completed",
+          fields: {
+            total: {
+              value: "118.00",
+              confidence: "0.9900",
+              evidence: { page: 1, line: 8, text: "total: 118.00" },
+            },
+          },
+        },
+        match: null,
+        export: null,
+      };
+      invoiceBundles = [bundle];
+      return Response.json(bundle, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/invoices/invoice-created/confirm",
+      ) &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      invoiceBundles = invoiceBundles.map(bundle => ({
+        ...bundle,
+        invoice: {
+          ...bundle.invoice,
+          ...body,
+          subtotal: Number(body.subtotal).toFixed(4),
+          tax: Number(body.tax).toFixed(4),
+          total: Number(body.total).toFixed(4),
+          status: "ready",
+          exception_codes: [],
+          current_version: 2,
+        },
+      }));
+      return Response.json(invoiceBundles[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/invoices/invoice-created/match",
+      ) &&
+      method === "POST"
+    ) {
+      invoiceBundles = invoiceBundles.map(bundle => ({
+        ...bundle,
+        match: {
+          id: "match-created",
+          vendor_id: "vendor-1",
+          contract_id: "contract-1",
+          transaction_id: "transaction-1",
+          application_id: "app-1",
+          purchase_request_id: null,
+          confidence: "1.0000",
+          status: "matched",
+          explanation: {
+            vendor: true,
+            contract: true,
+            transaction: true,
+            application: true,
+          },
+        },
+      }));
+      return Response.json(invoiceBundles[0]);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/accounting-mappings") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const mapping = { id: "mapping-created", ...body };
+      accountingMappings = [mapping];
+      return Response.json(mapping, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/invoices/invoice-created/mapping",
+      ) &&
+      method === "GET"
+    ) {
+      const mapping = accountingMappings[0];
+      return Response.json({
+        mapping_id: mapping.id,
+        resolved_scope_type: mapping.scope_type,
+        account_code: mapping.account_code,
+        tax_code: mapping.tax_code,
+        cost_center: mapping.cost_center,
+        department: mapping.department,
+        project: mapping.project,
+      });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/invoices/invoice-created/export",
+      ) &&
+      method === "POST"
+    ) {
+      invoiceBundles = invoiceBundles.map(bundle => ({
+        ...bundle,
+        invoice: { ...bundle.invoice, status: "synced" },
+        export: {
+          id: "export-created",
+          invoice_id: "invoice-created",
+          provider: "fake",
+          status: "synced",
+          external_id: "sandbox_bill_notion",
+          external_version: bundle.invoice.current_version,
+          exported_invoice_version: bundle.invoice.current_version,
+          diff: {},
+          attempts: 1,
+        },
+      }));
+      return Response.json(invoiceBundles[0]);
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/invoices/invoice-created") &&
+      method === "PATCH"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      invoiceBundles = invoiceBundles.map(bundle => ({
+        ...bundle,
+        invoice: {
+          ...bundle.invoice,
+          subtotal: Number(body.subtotal).toFixed(4),
+          tax: Number(body.tax).toFixed(4),
+          total: Number(body.total).toFixed(4),
+          current_version: bundle.invoice.current_version + 1,
+          status: "out_of_sync",
+        },
+        export: {
+          ...bundle.export!,
+          status: "out_of_sync",
+          diff: {
+            total: { external: "118.0000", local: "120.0000" },
+          },
+        },
+      }));
+      return Response.json(invoiceBundles[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/accounting-exports/export-created/retry",
+      ) &&
+      method === "POST"
+    ) {
+      invoiceBundles = invoiceBundles.map(bundle => ({
+        ...bundle,
+        invoice: { ...bundle.invoice, status: "synced" },
+        export: {
+          ...bundle.export!,
+          status: "synced",
+          diff: {},
+          attempts: bundle.export!.attempts + 1,
+        },
+      }));
+      return Response.json(invoiceBundles[0].export);
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -1513,4 +1786,48 @@ test("does not offer limit changes for a closed virtual card", async () => {
 
   expect(await screen.findByText("已关闭")).toBeVisible();
   expect(screen.queryByRole("button", { name: "更新限额" })).not.toBeInTheDocument();
+});
+
+test("reviews, matches, maps, exports, and resyncs an invoice", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/invoices"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "发票与会计" })).toBeVisible();
+  await user.type(
+    screen.getByLabelText("发票文本"),
+    "vendor: Notion Labs\ninvoice_number: INV-2026-001",
+  );
+  await user.click(screen.getByRole("button", { name: "提取发票" }));
+
+  expect(await screen.findByText("金额不平衡")).toBeVisible();
+  await user.clear(screen.getByLabelText("税额"));
+  await user.type(screen.getByLabelText("税额"), "18");
+  await user.click(screen.getByRole("button", { name: "确认发票字段" }));
+  expect(await screen.findByText("字段已确认")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "自动匹配业务记录" }));
+  expect(await screen.findByText("匹配完成 · 100%")).toBeVisible();
+
+  await user.type(screen.getByLabelText("会计科目"), "6200");
+  await user.type(screen.getByLabelText("税码"), "VAT18");
+  await user.type(screen.getByLabelText("成本中心"), "OPS-SAAS");
+  await user.type(screen.getByLabelText("会计部门"), "运营");
+  await user.type(screen.getByLabelText("项目"), "数字化");
+  await user.click(screen.getByRole("button", { name: "保存并应用映射" }));
+  expect(await screen.findByText("应用级映射 · 科目 6200")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "导出到会计系统" }));
+  expect(await screen.findByText("已同步到 Sandbox 会计系统")).toBeVisible();
+
+  await user.clear(screen.getByLabelText("调整后小计"));
+  await user.type(screen.getByLabelText("调整后小计"), "102");
+  await user.clear(screen.getByLabelText("调整后总额"));
+  await user.type(screen.getByLabelText("调整后总额"), "120");
+  await user.click(screen.getByRole("button", { name: "记录发票调整" }));
+  expect(await screen.findByText("本地数据已变更，等待重新同步")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "重新同步" }));
+  expect(await screen.findByText("已同步到 Sandbox 会计系统")).toBeVisible();
 });

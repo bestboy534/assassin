@@ -30,5 +30,11 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "payment_requests",
         "payment_instruments",
         "payment_events",
+        "invoices",
+        "invoice_versions",
+        "invoice_matches",
+        "accounting_mappings",
+        "accounting_exports",
+        "accounting_sync_records",
     } <= tables
-    assert version == ("20260611_0010",)
+    assert version == ("20260611_0011",)

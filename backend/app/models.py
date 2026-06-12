@@ -1,5 +1,16 @@
 """Import all mapped models so SQLAlchemy and Alembic share one metadata registry."""
 
+from .domains.accounting.models import (
+    AccountingExport,
+    AccountingMapping,
+    AccountingSyncRecord,
+    Invoice,
+    InvoiceExtraction,
+    InvoiceFile,
+    InvoiceLineItem,
+    InvoiceMatch,
+    InvoiceVersion,
+)
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
 from .domains.contracts.models import Contract, ContractVersion, Renewal
@@ -34,9 +45,12 @@ from .domains.spend.models import (
 from .domains.vendors.models import RiskFinding, Vendor, VendorAlias, VendorRiskAssessment
 
 __all__ = [
+    "AccountingExport",
+    "AccountingMapping",
     "AnalysisItem",
     "AnalysisRun",
     "AccountingPeriod",
+    "AccountingSyncRecord",
     "Application",
     "ApplicationSource",
     "ApprovalDecision",
@@ -46,6 +60,12 @@ __all__ = [
     "Contract",
     "ContractVersion",
     "InboxReceipt",
+    "Invoice",
+    "InvoiceExtraction",
+    "InvoiceFile",
+    "InvoiceLineItem",
+    "InvoiceMatch",
+    "InvoiceVersion",
     "Job",
     "Organization",
     "OrganizationMember",
