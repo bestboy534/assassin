@@ -18,6 +18,8 @@ from .domains.files.router import router as files_router
 from .domains.identity.router import router as identity_router
 from .domains.jobs.router import router as jobs_router
 from .domains.organizations.router import router as organizations_router
+from .domains.payments.router import router as payments_router
+from .domains.payments.router import webhook_router as payment_webhook_router
 from .domains.procurement.router import (
     approval_tasks_router,
     purchase_requests_router,
@@ -86,6 +88,8 @@ app.include_router(vendors_router, prefix=settings.api_v1_prefix)
 app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 app.include_router(spend_router, prefix=settings.api_v1_prefix)
 app.include_router(savings_router, prefix=settings.api_v1_prefix)
+app.include_router(payments_router, prefix=settings.api_v1_prefix)
+app.include_router(payment_webhook_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 Environment = Literal["local", "test", "staging", "production"]
 QueueBackend = Literal["memory", "redis"]
 StorageBackend = Literal["local", "s3"]
+PaymentProviderBackend = Literal["fake", "stripe_issuing"]
 
 
 class Settings(BaseSettings):
@@ -50,6 +51,10 @@ class Settings(BaseSettings):
     storage_presign_expires_seconds: int = 900
     max_upload_bytes: int = 25 * 1024 * 1024
 
+    payment_provider: PaymentProviderBackend = "fake"
+    payment_webhook_secret: SecretStr = SecretStr("local-payment-webhook-secret")
+    payment_webhook_tolerance_seconds: int = 300
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -75,6 +80,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production STORAGE_BACKEND must be s3")
             if self.auto_create_schema:
                 raise ValueError("Production AUTO_CREATE_SCHEMA must be false; use Alembic")
+            if self.payment_provider == "fake":
+                raise ValueError("Production PAYMENT_PROVIDER cannot use fake")
         return self
 
 

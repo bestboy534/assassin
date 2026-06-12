@@ -3692,6 +3692,274 @@ header button[aria-label] {
   font-size: 0.82rem;
 }
 
+.workspace-payments {
+  display: grid;
+  gap: 0;
+}
+
+.workspace-payment-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 22px;
+  border-left: 3px solid #1aa4ad;
+  background: #f3fbfb;
+  padding: 15px 17px;
+}
+
+.workspace-payment-notice svg {
+  flex: 0 0 auto;
+  color: #1a7b83;
+}
+
+.workspace-payment-notice strong,
+.workspace-payment-notice span {
+  display: block;
+}
+
+.workspace-payment-notice strong {
+  color: #171b46;
+}
+
+.workspace-payment-notice span {
+  margin-top: 5px;
+  color: #526070;
+  line-height: 1.55;
+}
+
+.workspace-payment-band {
+  min-width: 0;
+  margin-top: 28px;
+  border-top: 1px solid #dfe7ed;
+  padding-top: 24px;
+}
+
+.workspace-payment-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.workspace-payment-form label,
+.workspace-payment-limits label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: #171b46;
+  font-weight: 900;
+}
+
+.workspace-payment-form label span,
+.workspace-payment-limits label span {
+  font-size: 0.84rem;
+}
+
+.workspace-payment-form input,
+.workspace-payment-form select,
+.workspace-payment-limits input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #d5e0e8;
+  border-radius: 6px;
+  background: #fbfdfe;
+  padding: 0 11px;
+  color: #172033;
+  font: inherit;
+}
+
+.workspace-payment-form button,
+.workspace-payment-limits button,
+.workspace-payment-risk-action button {
+  min-height: 42px;
+  justify-self: start;
+  border: 0;
+  border-radius: 6px;
+  background: #20245f;
+  padding: 0 14px;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+}
+
+.workspace-payment-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.workspace-payment-list > article {
+  min-width: 0;
+  border: 1px solid #dfe7ed;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.workspace-payment-list > article > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.workspace-card-identity {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.workspace-card-identity > svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #1aa4ad;
+}
+
+.workspace-card-identity span,
+.workspace-card-identity h4,
+.workspace-card-identity p {
+  margin: 0;
+}
+
+.workspace-card-identity span {
+  color: #1a7b83;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.workspace-card-identity h4 {
+  margin-top: 5px;
+  color: #171b46;
+  font-size: 1.12rem;
+}
+
+.workspace-card-identity p {
+  margin-top: 5px;
+  color: #64748b;
+}
+
+.workspace-payment-status {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eef4f6;
+  padding: 7px 10px;
+  color: #526070;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.workspace-payment-status.is-active {
+  background: #e9f8f0;
+  color: #177245;
+}
+
+.workspace-payment-status.is-freeze_pending,
+.workspace-payment-status.is-unfreeze_pending,
+.workspace-payment-status.is-close_pending {
+  background: #fff5df;
+  color: #8a5a00;
+}
+
+.workspace-payment-status.is-frozen,
+.workspace-payment-status.is-closed {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.workspace-payment-guardrails {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(100px, 1fr));
+  margin-top: 18px;
+  border-block: 1px solid #e9eef3;
+  padding-block: 15px;
+}
+
+.workspace-payment-guardrails > div {
+  min-width: 0;
+  border-left: 1px solid #e9eef3;
+  padding: 0 13px;
+}
+
+.workspace-payment-guardrails > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.workspace-payment-guardrails span,
+.workspace-payment-guardrails strong {
+  display: block;
+}
+
+.workspace-payment-guardrails span {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.workspace-payment-guardrails strong {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: #171b46;
+}
+
+.workspace-payment-limits {
+  display: grid;
+  grid-template-columns: auto repeat(4, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.workspace-payment-limits-title {
+  display: flex;
+  align-self: center;
+  gap: 8px;
+  color: #171b46;
+}
+
+.workspace-payment-limits-title svg {
+  color: #1aa4ad;
+}
+
+.workspace-payment-risk-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.workspace-payment-risk-action > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.workspace-payment-risk-action span {
+  color: #8a3b12;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.workspace-payment-risk-action button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workspace-payment-risk-action button:nth-last-child(1):not(:only-child) {
+  border: 1px solid #d5e0e8;
+  background: #fff;
+  color: #20245f;
+}
+
+.workspace-payment-risk-action svg {
+  width: 17px;
+}
+
 .workspace-spend {
   display: grid;
   gap: 0;
@@ -4138,6 +4406,9 @@ header button[aria-label] {
   .workspace-savings-metrics,
   .workspace-savings-form,
   .workspace-savings-action,
+  .workspace-payment-form,
+  .workspace-payment-guardrails,
+  .workspace-payment-limits,
   .workspace-budget-summary,
   .workspace-budget-metrics,
   .workspace-spend-list > article,
@@ -4160,6 +4431,21 @@ header button[aria-label] {
   .workspace-savings-form .is-wide,
   .workspace-savings-action .is-wide {
     grid-column: auto;
+  }
+
+  .workspace-payment-guardrails > div,
+  .workspace-payment-guardrails > div:first-child {
+    border-top: 1px solid #e9eef3;
+    border-left: 0;
+    padding: 10px 0;
+  }
+
+  .workspace-payment-guardrails > div:first-child {
+    border-top: 0;
+  }
+
+  .workspace-payment-limits-title {
+    align-self: start;
   }
 
   .workspace-budget-metrics {
@@ -4206,6 +4492,17 @@ header button[aria-label] {
   .workspace-savings-verified {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .workspace-payment-list > article > header,
+  .workspace-payment-risk-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workspace-payment-risk-action > div {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .workspace-savings-verified span {

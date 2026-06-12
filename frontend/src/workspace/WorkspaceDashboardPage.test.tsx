@@ -234,6 +234,28 @@ let savingsSummary: {
   verified: string;
   cost_avoidance: string;
 };
+let paymentInstruments: Array<{
+  instrument: {
+    id: string;
+    purchase_request_id: string;
+    provider: string;
+    external_id: string;
+    brand: string;
+    last4: string;
+    status: string;
+    sandbox: boolean;
+    owner_name: string;
+    department: string;
+    merchant_lock: string;
+    currency: string;
+  };
+  limits: {
+    single: string;
+    daily: string;
+    monthly: string;
+    total: string;
+  };
+}>;
 
 beforeEach(() => {
   applicationItems = [];
@@ -258,6 +280,7 @@ beforeEach(() => {
     verified: "0.0000",
     cost_avoidance: "0.0000",
   };
+  paymentInstruments = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -950,6 +973,99 @@ beforeEach(() => {
       savingsSummary = { ...savingsSummary, verified: "600.0000" };
       return Response.json(optimizationProjects[0]);
     }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/payment-instruments") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: paymentInstruments });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/payment-instruments") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const purchase = purchaseRequests.find(
+        item => item.id === body.purchase_request_id,
+      )!;
+      const bundle = {
+        instrument: {
+          id: "instrument-created",
+          purchase_request_id: body.purchase_request_id,
+          provider: "fake",
+          external_id: "sandbox_notion",
+          brand: "Visa",
+          last4: "4242",
+          status: "active",
+          sandbox: true,
+          owner_name: body.owner_name,
+          department: purchase.department,
+          merchant_lock: body.merchant_lock,
+          currency: body.currency,
+        },
+        limits: {
+          single: Number(body.limits.single).toFixed(4),
+          daily: Number(body.limits.daily).toFixed(4),
+          monthly: Number(body.limits.monthly).toFixed(4),
+          total: Number(body.limits.total).toFixed(4),
+        },
+      };
+      paymentInstruments = [bundle];
+      return Response.json(bundle, { status: 201 });
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/payment-instruments/instrument-created/limits",
+      ) &&
+      method === "PUT"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      paymentInstruments = paymentInstruments.map(bundle => ({
+        ...bundle,
+        limits: {
+          single: Number(body.single).toFixed(4),
+          daily: Number(body.daily).toFixed(4),
+          monthly: Number(body.monthly).toFixed(4),
+          total: Number(body.total).toFixed(4),
+        },
+      }));
+      return Response.json(paymentInstruments[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/payment-instruments/instrument-created/freeze",
+      ) &&
+      method === "POST"
+    ) {
+      paymentInstruments = paymentInstruments.map(bundle => ({
+        ...bundle,
+        instrument: { ...bundle.instrument, status: "freeze_pending" },
+      }));
+      return Response.json(paymentInstruments[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/payment-instruments/instrument-created/unfreeze",
+      ) &&
+      method === "POST"
+    ) {
+      paymentInstruments = paymentInstruments.map(bundle => ({
+        ...bundle,
+        instrument: { ...bundle.instrument, status: "unfreeze_pending" },
+      }));
+      return Response.json(paymentInstruments[0]);
+    }
+    if (
+      url.endsWith(
+        "/api/v1/organizations/org-1/payment-instruments/instrument-created/close",
+      ) &&
+      method === "POST"
+    ) {
+      paymentInstruments = paymentInstruments.map(bundle => ({
+        ...bundle,
+        instrument: { ...bundle.instrument, status: "close_pending" },
+      }));
+      return Response.json(paymentInstruments[0]);
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -1245,4 +1361,156 @@ test("creates a savings opportunity from a billing audit result", async () => {
   await user.click(await screen.findByRole("button", { name: "转为节省机会" }));
 
   expect(await screen.findByText("已创建节省机会")).toBeVisible();
+});
+
+test("creates and governs a sandbox virtual card from an approved purchase", async () => {
+  purchaseRequests = [
+    {
+      id: "request-approved",
+      organization_id: "org-1",
+      software_name: "Notion 企业版",
+      business_reason: "团队知识库与项目协作",
+      estimated_monthly_cost_usd: 120,
+      department: "运营",
+      handles_sensitive_data: false,
+      data_categories: [],
+      status: "approved",
+      current_approval_task_id: null,
+    },
+  ];
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/payments"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "支付与虚拟卡" })).toBeVisible();
+  await user.selectOptions(screen.getByLabelText("已批准采购"), "request-approved");
+  await user.type(screen.getByLabelText("持卡负责人"), "运营负责人");
+  await user.type(screen.getByLabelText("限定商户"), "Notion Labs");
+  await user.type(screen.getByLabelText("初始单笔限额"), "300");
+  await user.type(screen.getByLabelText("初始日限额"), "500");
+  await user.type(screen.getByLabelText("初始月度限额"), "1200");
+  await user.type(screen.getByLabelText("初始总限额"), "12000");
+  await user.click(screen.getByRole("button", { name: "创建虚拟卡" }));
+
+  expect(await screen.findByText("Visa •••• 4242")).toBeVisible();
+  expect(screen.getByText("Sandbox")).toBeVisible();
+  await user.clear(screen.getByLabelText("月度限额"));
+  await user.type(screen.getByLabelText("月度限额"), "1000");
+  await user.click(screen.getByRole("button", { name: "更新限额" }));
+
+  expect(await screen.findByText("$1,000.00/月")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "冻结卡片" }));
+  await user.click(screen.getByRole("button", { name: "确认冻结" }));
+  expect(await screen.findByText("等待冻结确认")).toBeVisible();
+  expect(screen.queryByText("4242424242424242")).not.toBeInTheDocument();
+});
+
+test("unfreezes a frozen virtual card", async () => {
+  paymentInstruments = [
+    {
+      instrument: {
+        id: "instrument-created",
+        purchase_request_id: "request-approved",
+        provider: "fake",
+        external_id: "sandbox_notion",
+        brand: "Visa",
+        last4: "4242",
+        status: "frozen",
+        sandbox: true,
+        owner_name: "运营负责人",
+        department: "运营",
+        merchant_lock: "Notion Labs",
+        currency: "USD",
+      },
+      limits: {
+        single: "300.0000",
+        daily: "500.0000",
+        monthly: "1200.0000",
+        total: "12000.0000",
+      },
+    },
+  ];
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/payments"],
+  });
+  render(<RouterProvider router={router} />);
+
+  await user.click(await screen.findByRole("button", { name: "解冻卡片" }));
+
+  expect(await screen.findByText("等待解冻确认")).toBeVisible();
+});
+
+test("requires confirmation before closing a virtual card", async () => {
+  paymentInstruments = [
+    {
+      instrument: {
+        id: "instrument-created",
+        purchase_request_id: "request-approved",
+        provider: "fake",
+        external_id: "sandbox_notion",
+        brand: "Visa",
+        last4: "4242",
+        status: "active",
+        sandbox: true,
+        owner_name: "运营负责人",
+        department: "运营",
+        merchant_lock: "Notion Labs",
+        currency: "USD",
+      },
+      limits: {
+        single: "300.0000",
+        daily: "500.0000",
+        monthly: "1200.0000",
+        total: "12000.0000",
+      },
+    },
+  ];
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/payments"],
+  });
+  render(<RouterProvider router={router} />);
+
+  await user.click(await screen.findByRole("button", { name: "关闭卡片" }));
+  expect(screen.getByText("关闭后无法恢复，且后续交易将被拒绝。")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "确认关闭" }));
+
+  expect(await screen.findByText("等待关闭确认")).toBeVisible();
+});
+
+test("does not offer limit changes for a closed virtual card", async () => {
+  paymentInstruments = [
+    {
+      instrument: {
+        id: "instrument-created",
+        purchase_request_id: "request-approved",
+        provider: "fake",
+        external_id: "sandbox_notion",
+        brand: "Visa",
+        last4: "4242",
+        status: "closed",
+        sandbox: true,
+        owner_name: "运营负责人",
+        department: "运营",
+        merchant_lock: "Notion Labs",
+        currency: "USD",
+      },
+      limits: {
+        single: "300.0000",
+        daily: "500.0000",
+        monthly: "1200.0000",
+        total: "12000.0000",
+      },
+    },
+  ];
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/payments"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByText("已关闭")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "更新限额" })).not.toBeInTheDocument();
 });

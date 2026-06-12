@@ -8,6 +8,13 @@ from .domains.identity.models import User, UserSession
 from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
+from .domains.payments.models import (
+    PaymentAction,
+    PaymentEvent,
+    PaymentInstrument,
+    PaymentLimit,
+    PaymentRequest,
+)
 from .domains.procurement.models import ApprovalDecision, ApprovalTask, PurchaseRequest
 from .domains.savings.models import (
     OptimizationProject,
@@ -45,6 +52,11 @@ __all__ = [
     "OptimizationProject",
     "OptimizationTask",
     "OutboxEvent",
+    "PaymentAction",
+    "PaymentEvent",
+    "PaymentInstrument",
+    "PaymentLimit",
+    "PaymentRequest",
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",

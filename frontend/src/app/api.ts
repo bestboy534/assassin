@@ -317,6 +317,29 @@ export type SavingsSummaryItem = {
   cost_avoidance: string;
 };
 
+export type PaymentInstrumentBundle = {
+  instrument: {
+    id: string;
+    purchase_request_id: string;
+    provider: string;
+    external_id: string;
+    brand: string;
+    last4: string;
+    status: string;
+    sandbox: boolean;
+    owner_name: string;
+    department: string;
+    merchant_lock: string;
+    currency: string;
+  };
+  limits: {
+    single: string;
+    daily: string;
+    monthly: string;
+    total: string;
+  };
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -846,5 +869,86 @@ export function verifySavings(
 export function getSavingsSummary(organizationId: string) {
   return request<SavingsSummaryItem>(
     `/api/v1/organizations/${organizationId}/savings-summary`,
+  );
+}
+
+export function listPaymentInstruments(organizationId: string) {
+  return request<{ items: PaymentInstrumentBundle[] }>(
+    `/api/v1/organizations/${organizationId}/payment-instruments`,
+  );
+}
+
+export function createPaymentInstrument(
+  organizationId: string,
+  input: {
+    purchase_request_id: string;
+    owner_name: string;
+    merchant_lock: string;
+    currency: "USD";
+    limits: {
+      single: string;
+      daily: string;
+      monthly: string;
+      total: string;
+    };
+  },
+  idempotencyKey: string,
+) {
+  return request<PaymentInstrumentBundle>(
+    `/api/v1/organizations/${organizationId}/payment-instruments`,
+    {
+      method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function updatePaymentInstrumentLimits(
+  organizationId: string,
+  instrumentId: string,
+  limits: {
+    single: string;
+    daily: string;
+    monthly: string;
+    total: string;
+  },
+) {
+  return request<PaymentInstrumentBundle>(
+    `/api/v1/organizations/${organizationId}/payment-instruments/${instrumentId}/limits`,
+    {
+      method: "PUT",
+      body: JSON.stringify(limits),
+    },
+  );
+}
+
+export function freezePaymentInstrument(
+  organizationId: string,
+  instrumentId: string,
+) {
+  return request<PaymentInstrumentBundle>(
+    `/api/v1/organizations/${organizationId}/payment-instruments/${instrumentId}/freeze`,
+    { method: "POST" },
+  );
+}
+
+export function unfreezePaymentInstrument(
+  organizationId: string,
+  instrumentId: string,
+) {
+  return request<PaymentInstrumentBundle>(
+    `/api/v1/organizations/${organizationId}/payment-instruments/${instrumentId}/unfreeze`,
+    { method: "POST" },
+  );
+}
+
+export function closePaymentInstrument(
+  organizationId: string,
+  instrumentId: string,
+) {
+  return request<PaymentInstrumentBundle>(
+    `/api/v1/organizations/${organizationId}/payment-instruments/${instrumentId}/close`,
+    { method: "POST" },
   );
 }
