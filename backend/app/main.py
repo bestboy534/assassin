@@ -11,12 +11,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config import get_settings
 from .core.database import get_database
 from .database import get_history_run, list_history_runs, save_analysis_run
+from .domains.accounting.router import router as accounting_router
 from .domains.applications.router import router as applications_router
 from .domains.audit_ai.router import router as billing_audit_router
+from .domains.contracts.router import contracts_router, renewals_router
 from .domains.files.router import router as files_router
 from .domains.identity.router import router as identity_router
+from .domains.integrations.router import router as integrations_router
 from .domains.jobs.router import router as jobs_router
 from .domains.organizations.router import router as organizations_router
+from .domains.payments.router import router as payments_router
+from .domains.payments.router import webhook_router as payment_webhook_router
+from .domains.procurement.router import (
+    approval_tasks_router,
+    purchase_requests_router,
+)
+from .domains.savings.router import router as savings_router
+from .domains.spend.router import router as spend_router
+from .domains.vendors.router import risk_findings_router, vendors_router
 from .infrastructure.queue.client import JobQueue, build_queue
 from .infrastructure.storage.base import ObjectStorage
 from .infrastructure.storage.factory import build_storage
@@ -68,8 +80,20 @@ app.include_router(jobs_router, prefix=settings.api_v1_prefix)
 app.include_router(files_router, prefix=settings.api_v1_prefix)
 app.include_router(identity_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
+app.include_router(accounting_router, prefix=settings.api_v1_prefix)
+app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
+app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)
+app.include_router(approval_tasks_router, prefix=settings.api_v1_prefix)
+app.include_router(contracts_router, prefix=settings.api_v1_prefix)
+app.include_router(renewals_router, prefix=settings.api_v1_prefix)
+app.include_router(vendors_router, prefix=settings.api_v1_prefix)
+app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
+app.include_router(spend_router, prefix=settings.api_v1_prefix)
+app.include_router(savings_router, prefix=settings.api_v1_prefix)
+app.include_router(payments_router, prefix=settings.api_v1_prefix)
+app.include_router(payment_webhook_router, prefix=settings.api_v1_prefix)
 
 
 async def optional_session() -> AsyncIterator[AsyncSession | None]:

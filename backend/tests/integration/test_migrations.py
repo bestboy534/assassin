@@ -19,4 +19,30 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
             row[0]
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         }
-    assert {"jobs", "outbox_events", "inbox_receipts", "files"} <= tables
+        version = connection.execute("SELECT version_num FROM alembic_version").fetchone()
+    assert {
+        "jobs",
+        "outbox_events",
+        "inbox_receipts",
+        "files",
+        "savings_opportunities",
+        "optimization_projects",
+        "payment_requests",
+        "payment_instruments",
+        "payment_events",
+        "invoices",
+        "invoice_versions",
+        "invoice_matches",
+        "accounting_mappings",
+        "accounting_exports",
+        "accounting_sync_records",
+        "integration_connections",
+        "integration_credentials",
+        "integration_definitions",
+        "integration_field_mappings",
+        "integration_oauth_states",
+        "sync_cursors",
+        "sync_errors",
+        "sync_runs",
+    } <= tables
+    assert version == ("20260612_0012",)
