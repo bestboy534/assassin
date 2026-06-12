@@ -16,6 +16,16 @@ from .domains.audit_ai.models import AnalysisItem, AnalysisRun
 from .domains.contracts.models import Contract, ContractVersion, Renewal
 from .domains.files.models import StoredFile
 from .domains.identity.models import User, UserSession
+from .domains.integrations.models import (
+    IntegrationConnection,
+    IntegrationCredential,
+    IntegrationDefinition,
+    IntegrationFieldMapping,
+    IntegrationOAuthState,
+    SyncCursor,
+    SyncError,
+    SyncRun,
+)
 from .domains.jobs.models import Job
 from .domains.organizations.models import Organization, OrganizationMember
 from .domains.outbox.models import InboxReceipt, OutboxEvent
@@ -66,6 +76,11 @@ __all__ = [
     "InvoiceLineItem",
     "InvoiceMatch",
     "InvoiceVersion",
+    "IntegrationConnection",
+    "IntegrationCredential",
+    "IntegrationDefinition",
+    "IntegrationFieldMapping",
+    "IntegrationOAuthState",
     "Job",
     "Organization",
     "OrganizationMember",
@@ -85,6 +100,9 @@ __all__ = [
     "SavingsResult",
     "StoredFile",
     "SpendTransaction",
+    "SyncCursor",
+    "SyncError",
+    "SyncRun",
     "TransactionAnomaly",
     "TransactionSplit",
     "User",

@@ -17,6 +17,7 @@ from .domains.audit_ai.router import router as billing_audit_router
 from .domains.contracts.router import contracts_router, renewals_router
 from .domains.files.router import router as files_router
 from .domains.identity.router import router as identity_router
+from .domains.integrations.router import router as integrations_router
 from .domains.jobs.router import router as jobs_router
 from .domains.organizations.router import router as organizations_router
 from .domains.payments.router import router as payments_router
@@ -80,6 +81,7 @@ app.include_router(files_router, prefix=settings.api_v1_prefix)
 app.include_router(identity_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 app.include_router(accounting_router, prefix=settings.api_v1_prefix)
+app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
 app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)

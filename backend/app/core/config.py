@@ -9,6 +9,7 @@ Environment = Literal["local", "test", "staging", "production"]
 QueueBackend = Literal["memory", "redis"]
 StorageBackend = Literal["local", "s3"]
 PaymentProviderBackend = Literal["fake", "stripe_issuing"]
+IntegrationProviderBackend = Literal["fake_identity"]
 
 
 class Settings(BaseSettings):
@@ -55,6 +56,8 @@ class Settings(BaseSettings):
     payment_webhook_secret: SecretStr = SecretStr("local-payment-webhook-secret")
     payment_webhook_tolerance_seconds: int = 300
 
+    integration_secret_key: SecretStr = SecretStr("local-integration-secret")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -82,6 +85,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production AUTO_CREATE_SCHEMA must be false; use Alembic")
             if self.payment_provider == "fake":
                 raise ValueError("Production PAYMENT_PROVIDER cannot use fake")
+            if self.integration_secret_key.get_secret_value() == "local-integration-secret":
+                raise ValueError("Production INTEGRATION_SECRET_KEY must be replaced")
         return self
 
 

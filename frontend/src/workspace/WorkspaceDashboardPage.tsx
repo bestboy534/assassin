@@ -33,6 +33,7 @@ import {
 import type { SourceHint, SubscriptionItem } from "../types";
 import { BudgetTransactionSection } from "./BudgetTransactionSection";
 import { ContractRenewalSection } from "./ContractRenewalSection";
+import { IntegrationCenterSection } from "./IntegrationCenterSection";
 import { InvoiceAccountingSection } from "./InvoiceAccountingSection";
 import { PaymentInstrumentSection } from "./PaymentInstrumentSection";
 import { SavingsOptimizationSection } from "./SavingsOptimizationSection";
@@ -56,6 +57,7 @@ const workspaceNav = [
   ["节省优化", "savings"],
   ["支付卡片", "payments"],
   ["发票会计", "invoices"],
+  ["集成中心", "integrations"],
   ["报表", "reports"],
 ] as const;
 
@@ -289,6 +291,17 @@ export function WorkspaceSectionPage() {
     return (
       <WorkspaceShell activeSection="invoices" currentOrganization={workspace.currentOrganization}>
         <InvoiceAccountingSection organizationId={workspace.currentOrganization.id} />
+      </WorkspaceShell>
+    );
+  }
+
+  if (section === "integrations") {
+    return (
+      <WorkspaceShell
+        activeSection="integrations"
+        currentOrganization={workspace.currentOrganization}
+      >
+        <IntegrationCenterSection organizationId={workspace.currentOrganization.id} />
       </WorkspaceShell>
     );
   }

@@ -2,6 +2,7 @@
 
 from .core.config import (
     Environment,
+    IntegrationProviderBackend,
     PaymentProviderBackend,
     QueueBackend,
     Settings,
@@ -11,6 +12,7 @@ from .core.config import (
 
 __all__ = [
     "Environment",
+    "IntegrationProviderBackend",
     "PaymentProviderBackend",
     "QueueBackend",
     "Settings",

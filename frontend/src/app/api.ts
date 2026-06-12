@@ -420,6 +420,58 @@ export type ResolvedAccountingMapping = {
   project: string;
 };
 
+export type IntegrationDefinitionItem = {
+  id: string;
+  key: string;
+  name: string;
+  provider: string;
+  category: string;
+  auth_type: string;
+  capabilities: string[];
+  resource_types: string[];
+  status: string;
+};
+
+export type IntegrationConnectionItem = {
+  id: string;
+  organization_id: string;
+  definition_key: string;
+  definition_name: string;
+  display_name: string;
+  status: string;
+  auth_type: string;
+  credential_label: string;
+  credential_last4: string;
+  capabilities: string[];
+  resource_types: string[];
+  last_health_status: string | null;
+  last_sync_at: string | null;
+  created_at: string;
+};
+
+export type IntegrationSyncRunItem = {
+  id: string;
+  connection_id: string;
+  resource_type: string;
+  status: string;
+  cursor_before: string | null;
+  cursor_after: string | null;
+  read_count: number;
+  created_count: number;
+  updated_count: number;
+  skipped_count: number;
+  failed_count: number;
+  error_summary: string | null;
+  started_at: string;
+  finished_at: string | null;
+  errors: Array<{
+    code: string;
+    message: string;
+    external_id: string | null;
+    retryable: boolean;
+  }>;
+};
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -1172,5 +1224,94 @@ export function retryAccountingExport(
   return request<NonNullable<InvoiceBundle["export"]>>(
     `/api/v1/organizations/${organizationId}/accounting-exports/${exportId}/retry`,
     { method: "POST" },
+  );
+}
+
+export function listIntegrationDefinitions(organizationId: string) {
+  return request<{ items: IntegrationDefinitionItem[] }>(
+    `/api/v1/organizations/${organizationId}/integrations/definitions`,
+  );
+}
+
+export function listIntegrationConnections(organizationId: string) {
+  return request<{ items: IntegrationConnectionItem[] }>(
+    `/api/v1/organizations/${organizationId}/integrations/connections`,
+  );
+}
+
+export function createIntegrationConnection(
+  organizationId: string,
+  input: {
+    definition_key: string;
+    display_name: string;
+    api_token: string;
+    sandbox_options: Record<string, unknown>;
+  },
+) {
+  return request<IntegrationConnectionItem>(
+    `/api/v1/organizations/${organizationId}/integrations/connections`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function testIntegrationConnection(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<{ healthy: boolean; message: string }>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}/test`,
+    { method: "POST" },
+  );
+}
+
+export function syncIntegrationConnection(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<IntegrationSyncRunItem>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}/sync`,
+    { method: "POST" },
+  );
+}
+
+export function listIntegrationSyncRuns(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<{ items: IntegrationSyncRunItem[] }>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}/sync-runs`,
+  );
+}
+
+export function pauseIntegrationConnection(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<IntegrationConnectionItem>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}/pause`,
+    { method: "POST" },
+  );
+}
+
+export function resumeIntegrationConnection(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<IntegrationConnectionItem>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}/resume`,
+    { method: "POST" },
+  );
+}
+
+export function deleteIntegrationConnection(
+  organizationId: string,
+  connectionId: string,
+) {
+  return request<{ status: "deleted"; data_retention: "retain_synced_data" }>(
+    `/api/v1/organizations/${organizationId}/integrations/connections/${connectionId}`,
+    { method: "DELETE" },
   );
 }

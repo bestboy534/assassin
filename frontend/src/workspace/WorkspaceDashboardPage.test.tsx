@@ -322,6 +322,59 @@ let accountingMappings: Array<{
   department: string;
   project: string;
 }>;
+let integrationDefinitions: Array<{
+  id: string;
+  key: string;
+  name: string;
+  provider: string;
+  category: string;
+  auth_type: string;
+  capabilities: string[];
+  resource_types: string[];
+  status: string;
+}>;
+let integrationConnections: Array<{
+  id: string;
+  organization_id: string;
+  definition_key: string;
+  definition_name: string;
+  display_name: string;
+  status: string;
+  auth_type: string;
+  credential_label: string;
+  credential_last4: string;
+  capabilities: string[];
+  resource_types: string[];
+  last_health_status: string | null;
+  last_sync_at: string | null;
+  created_at: string;
+  fail_on_page?: number;
+}>;
+let syncRunsByConnection: Record<
+  string,
+  Array<{
+    id: string;
+    connection_id: string;
+    resource_type: string;
+    status: string;
+    cursor_before: string | null;
+    cursor_after: string | null;
+    read_count: number;
+    created_count: number;
+    updated_count: number;
+    skipped_count: number;
+    failed_count: number;
+    error_summary: string | null;
+    started_at: string;
+    finished_at: string | null;
+    errors: Array<{
+      code: string;
+      message: string;
+      external_id: string | null;
+      retryable: boolean;
+    }>;
+  }>
+>;
 
 beforeEach(() => {
   applicationItems = [];
@@ -349,6 +402,21 @@ beforeEach(() => {
   paymentInstruments = [];
   invoiceBundles = [];
   accountingMappings = [];
+  integrationDefinitions = [
+    {
+      id: "definition-fake",
+      key: "fake_identity",
+      name: "Sandbox 身份目录",
+      provider: "fake_identity",
+      category: "identity",
+      auth_type: "api_token",
+      capabilities: ["applications.read", "users.read", "groups.read"],
+      resource_types: ["applications"],
+      status: "available",
+    },
+  ];
+  integrationConnections = [];
+  syncRunsByConnection = {};
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -1339,6 +1407,137 @@ beforeEach(() => {
       }));
       return Response.json(invoiceBundles[0].export);
     }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/integrations/definitions") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: integrationDefinitions });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/integrations/connections") &&
+      method === "GET"
+    ) {
+      return Response.json({ items: integrationConnections });
+    }
+    if (
+      url.endsWith("/api/v1/organizations/org-1/integrations/connections") &&
+      method === "POST"
+    ) {
+      const body = JSON.parse(String(init?.body));
+      const connection = {
+        id: `connection-${integrationConnections.length + 1}`,
+        organization_id: "org-1",
+        definition_key: body.definition_key,
+        definition_name: "Sandbox 身份目录",
+        display_name: body.display_name,
+        status: "connected",
+        auth_type: "api token",
+        credential_label: "API token",
+        credential_last4: String(body.api_token).slice(-4),
+        capabilities: ["applications.read", "users.read", "groups.read"],
+        resource_types: ["applications"],
+        last_health_status: null,
+        last_sync_at: null,
+        created_at: "2026-07-10T09:00:00Z",
+        fail_on_page: body.sandbox_options?.fail_on_page,
+      };
+      integrationConnections = [connection, ...integrationConnections];
+      syncRunsByConnection[connection.id] = [];
+      return Response.json(connection, { status: 201 });
+    }
+    const connectionId = url.match(/integrations\/connections\/([^/]+)/)?.[1];
+    if (connectionId && url.endsWith(`/${connectionId}/test`) && method === "POST") {
+      integrationConnections = integrationConnections.map(connection =>
+        connection.id === connectionId
+          ? { ...connection, last_health_status: "healthy" }
+          : connection,
+      );
+      return Response.json({
+        healthy: true,
+        message: "Sandbox 身份目录连接正常",
+      });
+    }
+    if (connectionId && url.endsWith(`/${connectionId}/sync`) && method === "POST") {
+      const connection = integrationConnections.find(item => item.id === connectionId)!;
+      const failed = connection.fail_on_page === 2;
+      const run = failed
+        ? {
+            id: `run-${connectionId}-failed`,
+            connection_id: connectionId,
+            resource_type: "applications",
+            status: "failed",
+            cursor_before: null,
+            cursor_after: null,
+            read_count: 1,
+            created_count: 0,
+            updated_count: 0,
+            skipped_count: 0,
+            failed_count: 1,
+            error_summary: "Sandbox provider failed on page 2",
+            started_at: "2026-07-10T09:00:00Z",
+            finished_at: "2026-07-10T09:00:01Z",
+            errors: [
+              {
+                code: "provider_error",
+                message: "Sandbox provider failed on page 2",
+                external_id: null,
+                retryable: false,
+              },
+            ],
+          }
+        : {
+            id: `run-${connectionId}-ok`,
+            connection_id: connectionId,
+            resource_type: "applications",
+            status: "succeeded",
+            cursor_before: null,
+            cursor_after: "page-2",
+            read_count: 2,
+            created_count: 2,
+            updated_count: 0,
+            skipped_count: 0,
+            failed_count: 0,
+            error_summary: null,
+            started_at: "2026-07-10T09:00:00Z",
+            finished_at: "2026-07-10T09:00:01Z",
+            errors: [],
+          };
+      syncRunsByConnection[connectionId] = [run, ...(syncRunsByConnection[connectionId] ?? [])];
+      integrationConnections = integrationConnections.map(item =>
+        item.id === connectionId
+          ? { ...item, last_sync_at: "2026-07-10T09:00:01Z" }
+          : item,
+      );
+      return Response.json(run);
+    }
+    if (
+      connectionId &&
+      url.endsWith(`/${connectionId}/sync-runs`) &&
+      method === "GET"
+    ) {
+      return Response.json({ items: syncRunsByConnection[connectionId] ?? [] });
+    }
+    if (connectionId && url.endsWith(`/${connectionId}/pause`) && method === "POST") {
+      integrationConnections = integrationConnections.map(connection =>
+        connection.id === connectionId ? { ...connection, status: "paused" } : connection,
+      );
+      return Response.json(integrationConnections.find(item => item.id === connectionId));
+    }
+    if (connectionId && url.endsWith(`/${connectionId}/resume`) && method === "POST") {
+      integrationConnections = integrationConnections.map(connection =>
+        connection.id === connectionId ? { ...connection, status: "connected" } : connection,
+      );
+      return Response.json(integrationConnections.find(item => item.id === connectionId));
+    }
+    if (connectionId && method === "DELETE") {
+      integrationConnections = integrationConnections.map(connection =>
+        connection.id === connectionId ? { ...connection, status: "deleted" } : connection,
+      );
+      return Response.json({
+        status: "deleted",
+        data_retention: "retain_synced_data",
+      });
+    }
     return Response.json({ detail: "Not found" }, { status: 404 });
   });
 });
@@ -1830,4 +2029,53 @@ test("reviews, matches, maps, exports, and resyncs an invoice", async () => {
   expect(await screen.findByText("本地数据已变更，等待重新同步")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "重新同步" }));
   expect(await screen.findByText("已同步到 Sandbox 会计系统")).toBeVisible();
+});
+
+test("connects, syncs, diagnoses, pauses, resumes, and deletes an integration", async () => {
+  const user = userEvent.setup();
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/app/acme/integrations"],
+  });
+  render(<RouterProvider router={router} />);
+
+  expect(await screen.findByRole("heading", { name: "集成中心" })).toBeVisible();
+  expect(screen.getAllByText("Sandbox 身份目录")[0]).toBeVisible();
+
+  await user.type(screen.getByLabelText("连接名称"), "企业身份目录");
+  await user.type(screen.getByLabelText("API Token"), "sandbox-token-1234");
+  await user.click(screen.getByRole("button", { name: "连接并保存" }));
+
+  expect(
+    await screen.findByText(
+      (_, element) =>
+        element?.tagName.toLowerCase() === "span" &&
+        element.textContent?.includes("凭据尾号 1234") === true,
+    ),
+  ).toBeVisible();
+  expect(screen.queryByText("sandbox-token-1234")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "测试连接" }));
+  expect(await screen.findByText("Sandbox 身份目录连接正常")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "运行同步" }));
+  expect(await screen.findByText("同步成功 · 读取 2 · 新增 2")).toBeVisible();
+  expect(screen.getByText("游标 page-2")).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "暂停" }));
+  expect(await screen.findByText("已暂停")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "恢复" }));
+  expect(await screen.findByText("已连接")).toBeVisible();
+
+  await user.clear(screen.getByLabelText("连接名称"));
+  await user.type(screen.getByLabelText("连接名称"), "失败诊断连接");
+  await user.clear(screen.getByLabelText("API Token"));
+  await user.type(screen.getByLabelText("API Token"), "sandbox-failure-9876");
+  await user.click(screen.getByLabelText("模拟第二页失败"));
+  await user.click(screen.getByRole("button", { name: "连接并保存" }));
+  await user.click(screen.getAllByRole("button", { name: "运行同步" })[0]);
+  expect(await screen.findByText("provider_error")).toBeVisible();
+  expect(screen.getByText("Sandbox provider failed on page 2")).toBeVisible();
+
+  await user.click(screen.getAllByRole("button", { name: "删除连接" })[1]);
+  expect(await screen.findByText("已删除，已同步数据保留")).toBeVisible();
 });
