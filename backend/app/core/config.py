@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     payment_webhook_tolerance_seconds: int = 300
 
     integration_secret_key: SecretStr = SecretStr("local-integration-secret")
+    webhook_secret_key: SecretStr = SecretStr("local-webhook-secret")
+    webhook_worker_poll_seconds: int = 5
+    webhook_delivery_batch_size: int = 100
+    webhook_delivery_max_attempts: int = 8
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -87,6 +91,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production PAYMENT_PROVIDER cannot use fake")
             if self.integration_secret_key.get_secret_value() == "local-integration-secret":
                 raise ValueError("Production INTEGRATION_SECRET_KEY must be replaced")
+            if self.webhook_secret_key.get_secret_value() == "local-webhook-secret":
+                raise ValueError("Production WEBHOOK_SECRET_KEY must be replaced")
         return self
 
 

@@ -63,5 +63,8 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "control_reviews",
         "security_incidents",
         "incident_tasks",
+        "api_keys",
+        "webhook_endpoints",
+        "webhook_deliveries",
     } <= tables
-    assert version == ("20260612_0017",)
+    assert version == ("20260612_0018",)

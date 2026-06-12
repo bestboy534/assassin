@@ -12,6 +12,8 @@ from .config import get_settings
 from .core.database import get_database
 from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.accounting.router import router as accounting_router
+from .domains.api_keys.router import authentication_router as api_key_authentication_router
+from .domains.api_keys.router import management_router as api_key_management_router
 from .domains.applications.router import router as applications_router
 from .domains.audit_ai.router import router as billing_audit_router
 from .domains.compliance.control_router import controls_router, incidents_router
@@ -32,6 +34,7 @@ from .domains.reports.router import router as reports_router
 from .domains.savings.router import router as savings_router
 from .domains.spend.router import router as spend_router
 from .domains.vendors.router import risk_findings_router, vendors_router
+from .domains.webhooks.router import router as webhooks_router
 from .infrastructure.queue.client import JobQueue, build_queue
 from .infrastructure.storage.base import ObjectStorage
 from .infrastructure.storage.factory import build_storage
@@ -82,6 +85,8 @@ app.add_middleware(
 app.include_router(jobs_router, prefix=settings.api_v1_prefix)
 app.include_router(files_router, prefix=settings.api_v1_prefix)
 app.include_router(identity_router, prefix=settings.api_v1_prefix)
+app.include_router(api_key_management_router, prefix=settings.api_v1_prefix)
+app.include_router(api_key_authentication_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 app.include_router(accounting_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
@@ -101,6 +106,7 @@ app.include_router(retention_router, prefix=settings.api_v1_prefix)
 app.include_router(privacy_router, prefix=settings.api_v1_prefix)
 app.include_router(controls_router, prefix=settings.api_v1_prefix)
 app.include_router(incidents_router, prefix=settings.api_v1_prefix)
+app.include_router(webhooks_router, prefix=settings.api_v1_prefix)
 app.include_router(payments_router, prefix=settings.api_v1_prefix)
 app.include_router(payment_webhook_router, prefix=settings.api_v1_prefix)
 

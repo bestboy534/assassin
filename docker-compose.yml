@@ -13,6 +13,8 @@ x-backend-environment: &backend-environment
   S3_BUCKET_QUARANTINE: assassin-quarantine
   S3_BUCKET_FILES: assassin-files
   STORAGE_SIGNING_SECRET: local-compose-only
+  INTEGRATION_SECRET_KEY: local-compose-integration-only
+  WEBHOOK_SECRET_KEY: local-compose-webhook-only
 
 services:
   backend:
@@ -54,6 +56,15 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+
+  webhook-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.domains.webhooks.worker"]
+    environment: *backend-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16-alpine

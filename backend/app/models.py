@@ -11,6 +11,7 @@ from .domains.accounting.models import (
     InvoiceMatch,
     InvoiceVersion,
 )
+from .domains.api_keys.models import ApiKey
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
 from .domains.compliance.models import (
@@ -76,10 +77,12 @@ from .domains.spend.models import (
     TransactionSplit,
 )
 from .domains.vendors.models import RiskFinding, Vendor, VendorAlias, VendorRiskAssessment
+from .domains.webhooks.models import WebhookDelivery, WebhookEndpoint
 
 __all__ = [
     "AccountingExport",
     "AccountingMapping",
+    "ApiKey",
     "AnalysisItem",
     "AnalysisRun",
     "AuditLog",
@@ -152,4 +155,6 @@ __all__ = [
     "Vendor",
     "VendorAlias",
     "VendorRiskAssessment",
+    "WebhookDelivery",
+    "WebhookEndpoint",
 ]
