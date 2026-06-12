@@ -13,7 +13,13 @@ from .domains.accounting.models import (
 )
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
-from .domains.compliance.models import AuditLog
+from .domains.compliance.models import (
+    AuditLog,
+    DeletionJob,
+    DeletionJobItem,
+    LegalHold,
+    RetentionPolicy,
+)
 from .domains.contracts.models import Contract, ContractVersion, Renewal
 from .domains.files.models import StoredFile
 from .domains.identity.models import User, UserSession
@@ -68,6 +74,10 @@ __all__ = [
     "AnalysisItem",
     "AnalysisRun",
     "AuditLog",
+    "DeletionJob",
+    "DeletionJobItem",
+    "LegalHold",
+    "RetentionPolicy",
     "AccountingPeriod",
     "AccountingSyncRecord",
     "Application",

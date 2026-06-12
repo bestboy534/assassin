@@ -15,29 +15,29 @@
 
 ## 计划清单
 
-> 2026-06-12 复核：各计划文档内的 checkbox 仍作为执行清单模板保留，目前 01-22 均未逐项勾选。下表“实现状态”基于仓库代码、迁移、页面和自动化测试复核。
+> 2026-06-12 复核：各计划文档内的 checkbox 仍作为执行清单模板保留，目前 01-22 均未逐项勾选。严格按每份计划的完整验收标准，当前没有计划可标记为“全部完成”；下表只描述已经存在的实现范围。
 
 | 编号 | 计划 | 主要交付 | 依赖 | 实现状态 |
 |---|---|---|---|---|
-| 01 | [工程基线](./01-engineering-foundation.md) | 仓库清理、测试、CI、统一命令 | 无 | 已落地 |
-| 02 | [前端架构与公开站](./02-frontend-routing-design-system.md) | 路由拆分、设计系统、45 个公开页迁移 | 01 | 已落地 |
-| 03 | [CMS、SEO 与线索表单](./03-cms-seo-lead-forms.md) | 内容发布、SEO、预约演示与 CRM Outbox | 01、02、04 | 已落地 |
-| 04 | [数据与异步基础设施](./04-data-async-infrastructure.md) | PostgreSQL、Alembic、Redis、Worker、对象存储 | 01 | 已落地 |
-| 05 | [身份认证与账号安全](./05-authentication-account-security.md) | 登录、会话、验证、重置、MFA、OIDC | 04 | 已落地 |
-| 06 | [组织、多租户与 RBAC](./06-organizations-rbac.md) | 组织、成员、邀请、角色、权限、租户隔离 | 05 | 已落地 |
-| 07 | [工作台外壳与全局能力](./07-workspace-shell-dashboard.md) | 工作台导航、总览、搜索、通知、待办 | 02、06 | 已落地 |
-| 08 | [应用目录、发现与席位](./08-application-catalog-discovery-seats.md) | 应用主档、来源、去重、席位、使用率、离职 | 06、07 | 已落地 |
-| 09 | [AI 账单审计](./09-ai-billing-audit.md) | 文件导入、解析、确认、匹配、退订 Copilot | 04、06、08 | 已落地 |
-| 10 | [节省机会与优化项目](./10-savings-optimization.md) | 机会、项目、基线、实现与验证节省 | 08、09 | 已落地 |
-| 11 | [采购申请与审批](./11-procurement-approvals.md) | 动态申请、流程版本、审批任务、履约 | 06、07、08 | 已落地 |
-| 12 | [供应商与风险](./12-vendor-risk-management.md) | 供应商主档、问卷、证据、风险与接受 | 06、11 | 已落地 |
-| 13 | [合同、续订与谈判](./13-contracts-renewals.md) | 合同版本、AI 抽取、续订日历、谈判 | 08、11、12 | 已落地 |
-| 14 | [预算与交易](./14-budgets-transactions.md) | 预算、交易导入、匹配、多币种、月结 | 06、08 | 已落地 |
-| 15 | [支付与虚拟卡](./15-payments-virtual-cards.md) | 支付适配器、卡、限额、Webhook、失败处理 | 11、14 | 已落地 |
-| 16 | [发票与会计自动化](./16-invoices-accounting.md) | OCR、发票、匹配、科目映射、会计导出 | 09、13、14 | 已落地 |
-| 17 | [集成平台](./17-integrations-sync-platform.md) | OAuth、凭证、同步框架、首批适配器 | 04、06 | 已落地 |
-| 18 | [报表与导出](./18-reporting-exports.md) | 指标定义、分析查询、保存报表、定时导出 | 08-17 | 已落地 |
-| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 进行中：审计日志 |
+| 01 | [工程基线](./01-engineering-foundation.md) | 仓库清理、测试、CI、统一命令 | 无 | 部分实现 |
+| 02 | [前端架构与公开站](./02-frontend-routing-design-system.md) | 路由拆分、设计系统、45 个公开页迁移 | 01 | 核心已验证 |
+| 03 | [CMS、SEO 与线索表单](./03-cms-seo-lead-forms.md) | 内容发布、SEO、预约演示与 CRM Outbox | 01、02、04 | 部分实现 |
+| 04 | [数据与异步基础设施](./04-data-async-infrastructure.md) | PostgreSQL、Alembic、Redis、Worker、对象存储 | 01 | 核心已验证 |
+| 05 | [身份认证与账号安全](./05-authentication-account-security.md) | 登录、会话、验证、重置、MFA、OIDC | 04 | 部分实现 |
+| 06 | [组织、多租户与 RBAC](./06-organizations-rbac.md) | 组织、成员、邀请、角色、权限、租户隔离 | 05 | 部分实现 |
+| 07 | [工作台外壳与全局能力](./07-workspace-shell-dashboard.md) | 工作台导航、总览、搜索、通知、待办 | 02、06 | 部分实现 |
+| 08 | [应用目录、发现与席位](./08-application-catalog-discovery-seats.md) | 应用主档、来源、去重、席位、使用率、离职 | 06、07 | 部分实现 |
+| 09 | [AI 账单审计](./09-ai-billing-audit.md) | 文件导入、解析、确认、匹配、退订 Copilot | 04、06、08 | 部分实现 |
+| 10 | [节省机会与优化项目](./10-savings-optimization.md) | 机会、项目、基线、实现与验证节省 | 08、09 | 核心已验证 |
+| 11 | [采购申请与审批](./11-procurement-approvals.md) | 动态申请、流程版本、审批任务、履约 | 06、07、08 | 部分实现 |
+| 12 | [供应商与风险](./12-vendor-risk-management.md) | 供应商主档、问卷、证据、风险与接受 | 06、11 | 部分实现 |
+| 13 | [合同、续订与谈判](./13-contracts-renewals.md) | 合同版本、AI 抽取、续订日历、谈判 | 08、11、12 | 部分实现 |
+| 14 | [预算与交易](./14-budgets-transactions.md) | 预算、交易导入、匹配、多币种、月结 | 06、08 | 核心已验证 |
+| 15 | [支付与虚拟卡](./15-payments-virtual-cards.md) | 支付适配器、卡、限额、Webhook、失败处理 | 11、14 | 核心已验证 |
+| 16 | [发票与会计自动化](./16-invoices-accounting.md) | OCR、发票、匹配、科目映射、会计导出 | 09、13、14 | 核心已验证 |
+| 17 | [集成平台](./17-integrations-sync-platform.md) | OAuth、凭证、同步框架、首批适配器 | 04、06 | 部分实现 |
+| 18 | [报表与导出](./18-reporting-exports.md) | 指标定义、分析查询、保存报表、定时导出 | 08-17 | 核心已验证 |
+| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 部分实现（2/7） |
 | 20 | [套餐、计费与权益](./20-platform-billing-entitlements.md) | 套餐、订阅、权益、用量、账单门户 | 06、15 | 待开发 |
 | 21 | [支持、状态页与管理后台](./21-support-status-admin.md) | 工单、诊断授权、状态事件、平台运营后台 | 03-20 | 待开发 |
 | 22 | [可观测性与生产发布](./22-observability-production-release.md) | 日志、追踪、告警、性能、安全、灾备、发布 | 01-21 | 待开发 |

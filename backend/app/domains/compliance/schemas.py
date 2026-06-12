@@ -35,3 +35,61 @@ class AuditLogExportResponse(BaseModel):
     row_count: int = Field(ge=0)
     rows: list[AuditLogResponse]
     exported_at: datetime
+
+
+class CreateRetentionPolicyRequest(BaseModel):
+    data_type: Literal["stored_file"]
+    retention_days: int = Field(ge=1, le=3650)
+    description: str = Field(default="", max_length=500)
+
+
+class RetentionPolicyResponse(BaseModel):
+    id: UUID
+    organization_id: UUID
+    data_type: str
+    retention_days: int
+    action: str
+    description: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class CreateLegalHoldRequest(BaseModel):
+    resource_type: Literal["stored_file"]
+    resource_id: str = Field(min_length=1, max_length=160)
+    reason: str = Field(min_length=2, max_length=1000)
+    expires_at: datetime | None = None
+
+
+class LegalHoldResponse(BaseModel):
+    id: UUID
+    organization_id: UUID
+    resource_type: str
+    resource_id: str
+    reason: str
+    status: str
+    expires_at: datetime | None
+    created_at: datetime
+
+
+class DeletionPreviewResponse(BaseModel):
+    data_type: str
+    cutoff_at: datetime | None
+    delete_candidates: list[str]
+    skipped_legal_hold: list[str]
+
+
+class CreateDeletionJobRequest(BaseModel):
+    data_type: Literal["stored_file"]
+    reauth_confirmed: bool
+
+
+class DeletionJobResponse(BaseModel):
+    id: UUID
+    data_type: str
+    status: str
+    deleted_resource_ids: list[str]
+    skipped_legal_hold: list[str]
+    created_at: datetime
+    completed_at: datetime | None
