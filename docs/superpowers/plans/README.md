@@ -37,7 +37,7 @@
 | 16 | [发票与会计自动化](./16-invoices-accounting.md) | OCR、发票、匹配、科目映射、会计导出 | 09、13、14 | 核心已验证 |
 | 17 | [集成平台](./17-integrations-sync-platform.md) | OAuth、凭证、同步框架、首批适配器 | 04、06 | 部分实现 |
 | 18 | [报表与导出](./18-reporting-exports.md) | 指标定义、分析查询、保存报表、定时导出 | 08-17 | 核心已验证 |
-| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 部分实现（2/7） |
+| 19 | [安全、合规与隐私](./19-security-compliance-privacy.md) | 审计、保留、DSR、证据库、API 密钥 | 05、06、12 | 部分实现（3/7） |
 | 20 | [套餐、计费与权益](./20-platform-billing-entitlements.md) | 套餐、订阅、权益、用量、账单门户 | 06、15 | 待开发 |
 | 21 | [支持、状态页与管理后台](./21-support-status-admin.md) | 工单、诊断授权、状态事件、平台运营后台 | 03-20 | 待开发 |
 | 22 | [可观测性与生产发布](./22-observability-production-release.md) | 日志、追踪、告警、性能、安全、灾备、发布 | 01-21 | 待开发 |

@@ -56,7 +56,7 @@ class RetentionPolicyResponse(BaseModel):
 
 
 class CreateLegalHoldRequest(BaseModel):
-    resource_type: Literal["stored_file"]
+    resource_type: Literal["stored_file", "user"]
     resource_id: str = Field(min_length=1, max_length=160)
     reason: str = Field(min_length=2, max_length=1000)
     expires_at: datetime | None = None
@@ -93,3 +93,44 @@ class DeletionJobResponse(BaseModel):
     skipped_legal_hold: list[str]
     created_at: datetime
     completed_at: datetime | None
+
+
+class CreatePrivacyRequestRequest(BaseModel):
+    type: Literal["access", "correction", "deletion", "portability"]
+    scope: list[str] = Field(
+        default_factory=lambda: ["identity", "organization_memberships"],
+        min_length=1,
+        max_length=20,
+    )
+    requested_changes: dict[str, str] = Field(default_factory=dict)
+
+
+class ProcessPrivacyRequestRequest(BaseModel):
+    reauth_confirmed: bool
+
+
+class PrivacyRequestActionResponse(BaseModel):
+    id: UUID
+    action: str
+    metadata: dict[str, Any]
+    created_at: datetime
+
+
+class PrivacyRequestResponse(BaseModel):
+    id: UUID
+    subject_user_id: UUID
+    type: str
+    status: str
+    identity_verified_at: datetime
+    due_at: datetime
+    scope: list[str]
+    requested_changes: dict[str, Any]
+    result: dict[str, Any]
+    processing_history: list[PrivacyRequestActionResponse]
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+
+
+class PrivacyRequestListResponse(BaseModel):
+    items: list[PrivacyRequestResponse]

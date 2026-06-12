@@ -126,6 +126,74 @@ class DeletionJobItem(Base):
     deletion_job: Mapped[DeletionJob] = relationship(back_populates="items")
 
 
+class PrivacyRequest(Base):
+    __tablename__ = "privacy_requests"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    subject_user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    request_type: Mapped[str] = mapped_column(String(24), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="verified", index=True)
+    identity_verified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    scope_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    requested_changes_json: Mapped[dict[str, Any]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=dict,
+    )
+    result_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    actions: Mapped[list["PrivacyRequestAction"]] = relationship(
+        back_populates="privacy_request",
+        cascade="all, delete-orphan",
+        order_by="PrivacyRequestAction.created_at",
+    )
+
+
+class PrivacyRequestAction(Base):
+    __tablename__ = "privacy_request_actions"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=new_uuid)
+    privacy_request_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("privacy_requests.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        nullable=True,
+        index=True,
+    )
+    action: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    privacy_request: Mapped[PrivacyRequest] = relationship(back_populates="actions")
+
+
 event.listen(
     AuditLog.__table__,
     "after_create",

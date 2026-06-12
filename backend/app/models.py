@@ -18,6 +18,8 @@ from .domains.compliance.models import (
     DeletionJob,
     DeletionJobItem,
     LegalHold,
+    PrivacyRequest,
+    PrivacyRequestAction,
     RetentionPolicy,
 )
 from .domains.contracts.models import Contract, ContractVersion, Renewal
@@ -77,6 +79,8 @@ __all__ = [
     "DeletionJob",
     "DeletionJobItem",
     "LegalHold",
+    "PrivacyRequest",
+    "PrivacyRequestAction",
     "RetentionPolicy",
     "AccountingPeriod",
     "AccountingSyncRecord",

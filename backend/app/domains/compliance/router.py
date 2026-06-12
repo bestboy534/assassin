@@ -15,6 +15,15 @@ from app.domains.organizations.service import (
 from app.infrastructure.storage.base import ObjectStorage
 from app.infrastructure.storage.factory import build_storage
 
+from .privacy import (
+    CreatePrivacyRequest,
+    InvalidPrivacyRequest,
+    PrivacyIdentityVerificationRequired,
+    PrivacyReauthenticationRequired,
+    PrivacyRequestAlreadyProcessed,
+    PrivacyRequestNotFound,
+    PrivacyService,
+)
 from .schemas import (
     AuditLogExportRequest,
     AuditLogExportResponse,
@@ -22,10 +31,14 @@ from .schemas import (
     AuditLogResponse,
     CreateDeletionJobRequest,
     CreateLegalHoldRequest,
+    CreatePrivacyRequestRequest,
     CreateRetentionPolicyRequest,
     DeletionJobResponse,
     DeletionPreviewResponse,
     LegalHoldResponse,
+    PrivacyRequestListResponse,
+    PrivacyRequestResponse,
+    ProcessPrivacyRequestRequest,
     RetentionPolicyResponse,
 )
 from .service import (
@@ -34,6 +47,7 @@ from .service import (
     ComplianceService,
     CreateLegalHold,
     CreateRetentionPolicy,
+    LegalHoldResourceNotFound,
     ReauthenticationRequired,
     RetentionPolicyNotFound,
     RetentionService,
@@ -47,6 +61,10 @@ audit_logs_router = APIRouter(
 retention_router = APIRouter(
     prefix="/organizations/{organization_id}",
     tags=["compliance"],
+)
+privacy_router = APIRouter(
+    prefix="/privacy/requests",
+    tags=["privacy"],
 )
 
 
@@ -118,16 +136,22 @@ async def create_legal_hold(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> LegalHoldResponse:
     _require_retention_manager(context)
-    return await RetentionService(session).create_legal_hold(
-        organization_id=context.organization_id,
-        created_by_user_id=context.user_id,
-        body=CreateLegalHold(
-            resource_type=body.resource_type,
-            resource_id=body.resource_id,
-            reason=body.reason,
-            expires_at=body.expires_at,
-        ),
-    )
+    try:
+        return await RetentionService(session).create_legal_hold(
+            organization_id=context.organization_id,
+            created_by_user_id=context.user_id,
+            body=CreateLegalHold(
+                resource_type=body.resource_type,
+                resource_id=body.resource_id,
+                reason=body.reason,
+                expires_at=body.expires_at,
+            ),
+        )
+    except LegalHoldResourceNotFound as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="Legal hold resource not found",
+        ) from exc
 
 
 @retention_router.get(
@@ -184,6 +208,85 @@ def _require_retention_manager(context: OrganizationContext) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Retention management requires compliance permissions",
         )
+
+
+@privacy_router.post("", response_model=PrivacyRequestResponse, status_code=201)
+async def create_privacy_request(
+    body: CreatePrivacyRequestRequest,
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PrivacyRequestResponse:
+    try:
+        return await PrivacyService(session).create_request(
+            user=user,
+            body=CreatePrivacyRequest(
+                request_type=body.type,
+                scope=body.scope,
+                requested_changes=body.requested_changes,
+            ),
+        )
+    except PrivacyIdentityVerificationRequired as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verified identity is required",
+        ) from exc
+    except InvalidPrivacyRequest as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+
+@privacy_router.get("", response_model=PrivacyRequestListResponse)
+async def list_privacy_requests(
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PrivacyRequestListResponse:
+    return PrivacyRequestListResponse(
+        items=await PrivacyService(session).list_requests(user.id)
+    )
+
+
+@privacy_router.get("/{request_id}", response_model=PrivacyRequestResponse)
+async def get_privacy_request(
+    request_id: UUID,
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PrivacyRequestResponse:
+    try:
+        return await PrivacyService(session).get_request(
+            user_id=user.id,
+            request_id=request_id,
+        )
+    except PrivacyRequestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Privacy request not found") from exc
+
+
+@privacy_router.post(
+    "/{request_id}/process",
+    response_model=PrivacyRequestResponse,
+)
+async def process_privacy_request(
+    request_id: UUID,
+    body: ProcessPrivacyRequestRequest,
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PrivacyRequestResponse:
+    try:
+        return await PrivacyService(session).process_request(
+            user=user,
+            request_id=request_id,
+            reauth_confirmed=body.reauth_confirmed,
+        )
+    except PrivacyReauthenticationRequired as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Reauthentication confirmation is required",
+        ) from exc
+    except PrivacyRequestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Privacy request not found") from exc
+    except PrivacyRequestAlreadyProcessed as exc:
+        raise HTTPException(status_code=409, detail="Privacy request already processed") from exc
 
 
 @audit_logs_router.get("/{audit_log_id}", response_model=AuditLogResponse)

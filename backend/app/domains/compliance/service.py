@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
 from app.domains.files.models import StoredFile
+from app.domains.organizations.models import OrganizationMember
 from app.domains.organizations.service import OrganizationContext
 from app.infrastructure.storage.base import ObjectStorage
 
@@ -52,6 +53,10 @@ class RetentionForbidden(Exception):
 
 
 class RetentionPolicyNotFound(Exception):
+    pass
+
+
+class LegalHoldResourceNotFound(Exception):
     pass
 
 
@@ -285,6 +290,12 @@ class RetentionService:
         created_by_user_id: UUID,
         body: CreateLegalHold,
     ) -> LegalHoldResponse:
+        if not await self._legal_hold_resource_exists(
+            organization_id=organization_id,
+            resource_type=body.resource_type,
+            resource_id=body.resource_id,
+        ):
+            raise LegalHoldResourceNotFound(body.resource_id)
         legal_hold = LegalHold(
             organization_id=organization_id,
             created_by_user_id=created_by_user_id,
@@ -308,6 +319,39 @@ class RetentionService:
             )
         )
         return self._legal_hold_response(legal_hold)
+
+    async def _legal_hold_resource_exists(
+        self,
+        *,
+        organization_id: UUID,
+        resource_type: str,
+        resource_id: str,
+    ) -> bool:
+        try:
+            parsed_id = UUID(resource_id)
+        except ValueError:
+            return False
+        if resource_type == "stored_file":
+            return (
+                await self.session.scalar(
+                    select(StoredFile.id).where(
+                        StoredFile.id == parsed_id,
+                        StoredFile.organization_id == organization_id,
+                        StoredFile.status != "deleted",
+                    )
+                )
+            ) is not None
+        if resource_type == "user":
+            return (
+                await self.session.scalar(
+                    select(OrganizationMember.id).where(
+                        OrganizationMember.organization_id == organization_id,
+                        OrganizationMember.user_id == parsed_id,
+                        OrganizationMember.status == "active",
+                    )
+                )
+            ) is not None
+        return False
 
     async def preview_expired(
         self,
