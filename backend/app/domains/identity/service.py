@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
+from app.domains.billing.subscriptions import SubscriptionService
 from app.domains.organizations.models import Organization, OrganizationMember
 from app.domains.organizations.service import make_slug
 
@@ -70,6 +71,7 @@ class IdentityService:
                     status="active",
                 )
             )
+            await SubscriptionService(self.session).start_trial(organization.id)
             try:
                 raw_token = await self._create_session(user.id, user_agent)
             except IntegrityError as exc:

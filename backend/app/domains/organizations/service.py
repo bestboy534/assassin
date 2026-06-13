@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
+from app.domains.billing.subscriptions import SubscriptionService
 from app.domains.identity.models import User
 
 from .models import Organization, OrganizationMember
@@ -72,6 +73,7 @@ class OrganizationService:
                 status="active",
             )
             self.session.add(member)
+            await SubscriptionService(self.session).start_trial(organization.id)
         return OrganizationResponse(
             id=organization.id,
             name=organization.name,

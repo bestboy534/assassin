@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, Protocol
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.transactions import transaction
 from app.domains.applications.models import Application
 from app.domains.organizations.models import OrganizationMember
-from app.domains.organizations.service import OrganizationContext
 
 from .models import (
     OrganizationEntitlement,
@@ -43,6 +42,11 @@ STARTER_ENTITLEMENTS: tuple[
     ("support_tier", "support_tier", "standard", False),
 )
 VALID_VALUE_TYPES = {item[1] for item in STARTER_ENTITLEMENTS}
+
+
+class OrganizationScope(Protocol):
+    @property
+    def organization_id(self) -> UUID: ...
 
 
 @dataclass(frozen=True)
@@ -170,7 +174,7 @@ class EntitlementService:
 
     async def require_feature(
         self,
-        context: OrganizationContext,
+        context: OrganizationScope,
         feature: str,
     ) -> None:
         entitlement = await self.resolve(context.organization_id, feature)
@@ -179,7 +183,7 @@ class EntitlementService:
 
     async def require_capacity(
         self,
-        context: OrganizationContext,
+        context: OrganizationScope,
         metric: str,
         increment: int = 1,
     ) -> None:
@@ -205,7 +209,7 @@ class EntitlementService:
 
     async def record_usage(
         self,
-        context: OrganizationContext,
+        context: OrganizationScope,
         metric: str,
         amount: int,
         source_key: str,
