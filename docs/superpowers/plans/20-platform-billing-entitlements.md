@@ -160,7 +160,7 @@ git commit -m "feat: govern plan changes and cancellation"
 
 ## Task 5: 用量计量
 
-- [ ] **Step 1: 写幂等计量测试**
+- [x] **Step 1: 写幂等计量测试**
 
 ```py
 async def test_usage_source_key_prevents_double_count(usage_service):
@@ -169,15 +169,15 @@ async def test_usage_source_key_prevents_double_count(usage_service):
     assert await current_usage("ai_pages") == 10
 ```
 
-- [ ] **Step 2: 指标**
+- [x] **Step 2: 指标**
 
 成员、应用、存储、AI 页数、集成连接、导出行数和 API 调用。
 
-- [ ] **Step 3: 阈值**
+- [x] **Step 3: 阈值**
 
 80%、100% 发送通知；hard limit 拒绝新操作，soft limit 记录超额并告警。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 git add backend/app/domains/billing
