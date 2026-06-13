@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
+from app.domains.billing.service import EntitlementService
 from app.domains.identity.models import User
 from app.domains.organizations.service import OrganizationContext
 
@@ -68,28 +69,32 @@ class ApplicationService:
         body: CreateApplicationRequest,
     ) -> ApplicationResponse:
         name_normalized = normalize_application_name(body.name)
-        existing_application_id = await self.session.scalar(
-            select(Application.id).where(
-                Application.organization_id == context.organization_id,
-                Application.name_normalized == name_normalized,
-            )
-        )
-        if existing_application_id is not None:
-            raise ApplicationConflict("应用名称已存在")
-
-        application = Application(
-            organization_id=context.organization_id,
-            name=body.name.strip(),
-            name_normalized=name_normalized,
-            category=body.category.strip() or "uncategorized",
-            business_owner=body.business_owner,
-            technical_owner=body.technical_owner,
-            approved=body.approved,
-            risk_level="unknown",
-            status="active",
-            created_by_user_id=user.id,
-        )
         async with transaction(self.session):
+            existing_application_id = await self.session.scalar(
+                select(Application.id).where(
+                    Application.organization_id == context.organization_id,
+                    Application.name_normalized == name_normalized,
+                )
+            )
+            if existing_application_id is not None:
+                raise ApplicationConflict("应用名称已存在")
+
+            await EntitlementService(self.session).require_capacity(
+                context,
+                "applications",
+            )
+            application = Application(
+                organization_id=context.organization_id,
+                name=body.name.strip(),
+                name_normalized=name_normalized,
+                category=body.category.strip() or "uncategorized",
+                business_owner=body.business_owner,
+                technical_owner=body.technical_owner,
+                approved=body.approved,
+                risk_level="unknown",
+                status="active",
+                created_by_user_id=user.id,
+            )
             self.session.add(application)
             try:
                 await self.session.flush()

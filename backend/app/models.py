@@ -14,6 +14,17 @@ from .domains.accounting.models import (
 from .domains.api_keys.models import ApiKey
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
+from .domains.billing.models import (
+    BillingCustomer,
+    BillingInvoice,
+    OrganizationEntitlement,
+    OrganizationSubscription,
+    Plan,
+    PlanEntitlement,
+    PlanPrice,
+    UsageCounter,
+    UsageEvent,
+)
 from .domains.compliance.models import (
     AuditLog,
     ComplianceControl,
@@ -86,6 +97,8 @@ __all__ = [
     "AnalysisItem",
     "AnalysisRun",
     "AuditLog",
+    "BillingCustomer",
+    "BillingInvoice",
     "ComplianceControl",
     "ComplianceFramework",
     "ControlEvidence",
@@ -123,7 +136,9 @@ __all__ = [
     "IntegrationOAuthState",
     "Job",
     "Organization",
+    "OrganizationEntitlement",
     "OrganizationMember",
+    "OrganizationSubscription",
     "OptimizationProject",
     "OptimizationTask",
     "OutboxEvent",
@@ -132,6 +147,9 @@ __all__ = [
     "PaymentInstrument",
     "PaymentLimit",
     "PaymentRequest",
+    "Plan",
+    "PlanEntitlement",
+    "PlanPrice",
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",
@@ -150,6 +168,8 @@ __all__ = [
     "SyncRun",
     "TransactionAnomaly",
     "TransactionSplit",
+    "UsageCounter",
+    "UsageEvent",
     "User",
     "UserSession",
     "Vendor",

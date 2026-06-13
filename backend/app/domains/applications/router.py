@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.domains.billing.service import EntitlementExceeded
 from app.domains.identity.models import User
 from app.domains.identity.router import require_user
 from app.domains.organizations.service import (
@@ -66,6 +67,18 @@ async def create_application(
 ) -> ApplicationResponse:
     try:
         return await ApplicationService(session).create(context, user, body)
+    except EntitlementExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "entitlement_exceeded",
+                "entitlement": exc.entitlement,
+                "current": exc.current,
+                "limit": exc.limit,
+                "increment": exc.increment,
+                "plan": exc.plan,
+            },
+        ) from exc
     except ApplicationConflict as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
