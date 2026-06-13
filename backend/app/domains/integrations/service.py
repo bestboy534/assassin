@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from app.core.transactions import transaction
 from app.domains.applications.models import Application, ApplicationSource
 from app.domains.applications.service import normalize_application_name
+from app.domains.billing.service import EntitlementService
 from app.domains.identity.models import User
 from app.domains.organizations.service import OrganizationContext
 from app.infrastructure.secrets import EncryptedSecret, SecretCipher
@@ -166,6 +167,10 @@ class IntegrationService:
         user: User,
         body: CreateIntegrationConnectionRequest,
     ) -> IntegrationConnectionResponse:
+        await EntitlementService(self.session).require_capacity(
+            context,
+            "integration_connections",
+        )
         definition = await self._definition_by_key(body.definition_key)
         token = body.api_token.strip()
         connection = IntegrationConnection(

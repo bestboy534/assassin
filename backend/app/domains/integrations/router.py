@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
 from app.core.database import get_session
+from app.domains.billing.service import EntitlementExceeded
 from app.domains.identity.models import User
 from app.domains.identity.router import require_user
 from app.domains.organizations.service import (
@@ -88,6 +89,18 @@ async def create_integration_connection(
         )
     except IntegrationDefinitionNotFound as exc:
         raise HTTPException(status_code=404, detail="Integration definition not found") from exc
+    except EntitlementExceeded as exc:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "entitlement_exceeded",
+                "entitlement": exc.entitlement,
+                "current": exc.current,
+                "limit": exc.limit,
+                "increment": exc.increment,
+                "plan": exc.plan,
+            },
+        ) from exc
 
 
 @router.get("/connections", response_model=IntegrationConnectionListResponse)

@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.ids import new_uuid
 from app.core.transactions import transaction
 from app.domains.applications.models import Application
+from app.domains.billing.usage import OrganizationUsageScope, UsageService
 from app.domains.contracts.models import Renewal
 from app.domains.jobs.models import Job
 from app.domains.organizations.service import OrganizationContext
@@ -337,6 +338,13 @@ class ReportService:
             )
             self.session.add(report_export)
             await self.session.flush()
+            if report_export.row_count > 0:
+                await UsageService(self.session).record(
+                    OrganizationUsageScope(_uuid(scope.organization_id)),
+                    "export_rows",
+                    report_export.row_count,
+                    source_key=f"report-export:{report_export.id}",
+                )
         return self._export_response(report_export, token=token, api_prefix=api_prefix)
 
     async def download_export(

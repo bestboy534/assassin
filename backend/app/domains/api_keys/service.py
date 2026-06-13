@@ -2,12 +2,13 @@ import hmac
 import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
+from app.domains.billing.usage import OrganizationUsageScope, UsageService
 from app.domains.compliance.service import AuditLogCreate, ComplianceService, _aware_utc
 from app.domains.identity.security import hash_token
 from app.domains.organizations.service import OrganizationContext
@@ -119,6 +120,12 @@ class ApiKeyService:
         normalized_scope = required_scope.strip().casefold() if required_scope else None
         if normalized_scope and normalized_scope not in scopes:
             raise ApiKeyScopeForbidden(normalized_scope)
+        await UsageService(self.session).record(
+            OrganizationUsageScope(record.organization_id),
+            "api_calls",
+            1,
+            source_key=f"api-key:{record.id}:{uuid4()}",
+        )
         async with transaction(self.session):
             record.last_used_at = now
         await self.session.commit()

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
 from app.core.database import get_session
+from app.domains.billing.service import EntitlementExceeded
 from app.domains.jobs.router import organization_id, queue_from_request
 from app.domains.jobs.service import JobService
 from app.infrastructure.queue.client import InMemoryJobQueue, JobQueue
@@ -94,6 +95,18 @@ async def complete_upload(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found") from exc
     except FileNotAvailable as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except EntitlementExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "entitlement_exceeded",
+                "entitlement": exc.entitlement,
+                "current": exc.current,
+                "limit": exc.limit,
+                "increment": exc.increment,
+                "plan": exc.plan,
+            },
+        ) from exc
     return CompleteUploadResponse(id=stored_file.id, status=stored_file.status, job_id=job.id)
 
 

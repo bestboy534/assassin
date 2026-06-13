@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from math import ceil
 from typing import Literal, Protocol
 from uuid import UUID
 
@@ -8,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.transactions import transaction
 from app.domains.applications.models import Application
+from app.domains.files.models import StoredFile
+from app.domains.integrations.models import IntegrationConnection
 from app.domains.organizations.models import OrganizationMember
+from app.domains.outbox.models import OutboxEvent
+from app.domains.outbox.repository import OutboxRepository
 
 from .models import (
     OrganizationEntitlement,
@@ -38,6 +43,9 @@ STARTER_ENTITLEMENTS: tuple[
     ("api_access", "boolean", False, True),
     ("ai_pages", "metered", 100, False),
     ("storage_bytes", "metered", 1_073_741_824, True),
+    ("integration_connections", "integer", 3, True),
+    ("export_rows", "metered", 10_000, False),
+    ("api_calls", "metered", 1_000, True),
     ("retention_days", "duration", 30, True),
     ("support_tier", "support_tier", "standard", False),
 )
@@ -50,6 +58,9 @@ PRO_ENTITLEMENTS: tuple[
     ("api_access", "boolean", True, True),
     ("ai_pages", "metered", 1_000, False),
     ("storage_bytes", "metered", 10_737_418_240, True),
+    ("integration_connections", "integer", 20, True),
+    ("export_rows", "metered", 100_000, False),
+    ("api_calls", "metered", 50_000, True),
     ("retention_days", "duration", 365, True),
     ("support_tier", "support_tier", "priority", False),
 )
@@ -108,6 +119,10 @@ class UsageResult:
     period_start: datetime
     period_end: datetime
     duplicate: bool
+    status: str
+    limit: int
+    hard_limit: bool
+    thresholds_queued: list[int]
 
 
 class EntitlementDenied(Exception):
@@ -140,6 +155,7 @@ class EntitlementConfigurationError(Exception):
 class EntitlementService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        self.outbox = OutboxRepository(session)
 
     async def ensure_default_subscription(
         self,
@@ -177,6 +193,7 @@ class EntitlementService:
         plan = await self.session.get(Plan, subscription.plan_id)
         if plan is None:
             raise EntitlementConfigurationError("Subscription plan is missing")
+        plan = await self.ensure_plan(plan.key)
 
         now = datetime.now(UTC)
         override = await self.session.scalar(
@@ -239,7 +256,7 @@ class EntitlementService:
             raise EntitlementConfigurationError(
                 f"Entitlement {metric} is not a numeric capacity"
             )
-        current = await self._current_capacity(context.organization_id, metric)
+        current = await self.current_usage(context.organization_id, metric)
         if entitlement.hard_limit and current + increment > entitlement.value:
             raise EntitlementExceeded(
                 metric,
@@ -267,6 +284,16 @@ class EntitlementService:
 
         event_time = occurred_at or datetime.now(UTC)
         period_start, period_end = self._calendar_month(event_time)
+        entitlement = await self.resolve(context.organization_id, metric)
+        if (
+            entitlement.value_type not in {"integer", "metered"}
+            or isinstance(entitlement.value, bool)
+            or not isinstance(entitlement.value, int)
+        ):
+            raise EntitlementConfigurationError(
+                f"Entitlement {metric} is not a numeric usage limit"
+            )
+        limit = entitlement.value
         duplicate = await self.session.scalar(
             select(UsageEvent.id).where(
                 UsageEvent.organization_id == context.organization_id,
@@ -286,14 +313,29 @@ class EntitlementService:
                 period_start=period_start,
                 period_end=period_end,
                 duplicate=True,
+                status=counter.status if counter is not None else "ok",
+                limit=limit,
+                hard_limit=entitlement.hard_limit,
+                thresholds_queued=[],
             )
 
-        async with transaction(self.session):
-            counter = await self._usage_counter(
-                context.organization_id,
+        counter = await self._usage_counter(
+            context.organization_id,
+            metric,
+            period_start,
+        )
+        current_value = counter.current_value if counter is not None else 0
+        if entitlement.hard_limit and current_value + amount > limit:
+            raise EntitlementExceeded(
                 metric,
-                period_start,
+                current=current_value,
+                limit=limit,
+                increment=amount,
+                plan=entitlement.plan,
             )
+
+        queued_thresholds: list[int] = []
+        async with transaction(self.session):
             if counter is None:
                 counter = UsageCounter(
                     organization_id=context.organization_id,
@@ -305,6 +347,7 @@ class EntitlementService:
                 )
                 self.session.add(counter)
                 await self.session.flush()
+            previous_value = counter.current_value
             self.session.add(
                 UsageEvent(
                     organization_id=context.organization_id,
@@ -316,6 +359,21 @@ class EntitlementService:
                 )
             )
             counter.current_value += amount
+            counter.soft_limit = (
+                ceil(limit * 0.8) if entitlement.hard_limit else limit
+            )
+            counter.hard_limit = limit if entitlement.hard_limit else None
+            counter.status = self.usage_status(counter.current_value, limit)
+            queued_thresholds = await self._queue_usage_thresholds(
+                organization_id=context.organization_id,
+                metric=metric,
+                period_start=period_start,
+                period_end=period_end,
+                previous_value=previous_value,
+                current_value=counter.current_value,
+                limit=limit,
+                hard_limit=entitlement.hard_limit,
+            )
             await self.session.flush()
 
         return UsageResult(
@@ -324,6 +382,10 @@ class EntitlementService:
             period_start=period_start,
             period_end=period_end,
             duplicate=False,
+            status=counter.status,
+            limit=limit,
+            hard_limit=entitlement.hard_limit,
+            thresholds_queued=queued_thresholds,
         )
 
     async def set_organization_entitlement(
@@ -378,6 +440,20 @@ class EntitlementService:
             )
             self.session.add(plan)
             await self.session.flush()
+        else:
+            plan.name = definition.name
+            plan.description = definition.description
+            plan.status = "active"
+            plan.is_default = definition.key == STARTER_PLAN_KEY
+
+        price = await self.session.scalar(
+            select(PlanPrice).where(
+                PlanPrice.plan_id == plan.id,
+                PlanPrice.currency == "USD",
+                PlanPrice.billing_interval == "month",
+            )
+        )
+        if price is None:
             self.session.add(
                 PlanPrice(
                     plan_id=plan.id,
@@ -387,7 +463,23 @@ class EntitlementService:
                     status="active",
                 )
             )
-            for key, value_type, value, hard_limit in definition.entitlements:
+        else:
+            price.amount_minor = definition.amount_minor
+            price.status = "active"
+
+        existing_entitlements = {
+            entitlement.key: entitlement
+            for entitlement in (
+                await self.session.scalars(
+                    select(PlanEntitlement).where(
+                        PlanEntitlement.plan_id == plan.id
+                    )
+                )
+            ).all()
+        }
+        for key, value_type, value, hard_limit in definition.entitlements:
+            entitlement = existing_entitlements.get(key)
+            if entitlement is None:
                 self.session.add(
                     PlanEntitlement(
                         plan_id=plan.id,
@@ -397,10 +489,20 @@ class EntitlementService:
                         hard_limit=hard_limit,
                     )
                 )
-            await self.session.flush()
+            else:
+                entitlement.value_type = value_type
+                entitlement.value_json = {"value": value}
+                entitlement.hard_limit = hard_limit
+        await self.session.flush()
         return plan
 
-    async def _current_capacity(self, organization_id: UUID, metric: str) -> int:
+    async def current_usage(
+        self,
+        organization_id: UUID,
+        metric: str,
+        *,
+        now: datetime | None = None,
+    ) -> int:
         if metric == "applications":
             return int(
                 await self.session.scalar(
@@ -421,10 +523,76 @@ class EntitlementService:
                 )
                 or 0
             )
-        now = datetime.now(UTC)
-        period_start, _ = self._calendar_month(now)
+        if metric == "storage_bytes":
+            return int(
+                await self.session.scalar(
+                    select(func.coalesce(func.sum(StoredFile.size_bytes), 0)).where(
+                        StoredFile.organization_id == organization_id,
+                        StoredFile.status == "available",
+                    )
+                )
+                or 0
+            )
+        if metric == "integration_connections":
+            return int(
+                await self.session.scalar(
+                    select(func.count(IntegrationConnection.id)).where(
+                        IntegrationConnection.organization_id == organization_id,
+                        IntegrationConnection.deleted_at.is_(None),
+                    )
+                )
+                or 0
+            )
+        current_time = now or datetime.now(UTC)
+        period_start, _ = self._calendar_month(current_time)
         counter = await self._usage_counter(organization_id, metric, period_start)
         return counter.current_value if counter is not None else 0
+
+    async def _queue_usage_thresholds(
+        self,
+        *,
+        organization_id: UUID,
+        metric: str,
+        period_start: datetime,
+        period_end: datetime,
+        previous_value: int,
+        current_value: int,
+        limit: int,
+        hard_limit: bool,
+    ) -> list[int]:
+        queued: list[int] = []
+        for threshold in (80, 100):
+            threshold_value = ceil(limit * threshold / 100)
+            if not previous_value < threshold_value <= current_value:
+                continue
+            aggregate_id = (
+                f"{organization_id}:{metric}:{period_start.date()}:{threshold}"
+            )
+            existing = await self.session.scalar(
+                select(OutboxEvent.id).where(
+                    OutboxEvent.event_type == "billing.usage_threshold",
+                    OutboxEvent.aggregate_id == aggregate_id,
+                )
+            )
+            if existing is not None:
+                continue
+            await self.outbox.add(
+                "billing.usage_threshold",
+                aggregate_id,
+                {
+                    "organization_id": str(organization_id),
+                    "metric": metric,
+                    "threshold": threshold,
+                    "current_value": current_value,
+                    "limit": limit,
+                    "hard_limit": hard_limit,
+                    "period_start": period_start.isoformat(),
+                    "period_end": period_end.isoformat(),
+                },
+                organization_id=organization_id,
+            )
+            queued.append(threshold)
+        return queued
 
     async def _usage_counter(
         self,
@@ -450,6 +618,16 @@ class EntitlementService:
         else:
             end = start.replace(month=start.month + 1)
         return start, end
+
+    @staticmethod
+    def usage_status(current_value: int, limit: int) -> str:
+        if current_value > limit:
+            return "overage"
+        if current_value >= limit:
+            return "limit_reached"
+        if current_value >= ceil(limit * 0.8):
+            return "warning"
+        return "ok"
 
     @staticmethod
     def _stored_value(value_json: dict[str, object], key: str) -> bool | int | str:

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.domains.billing.service import EntitlementExceeded
 from app.domains.compliance.router import organization_context
 from app.domains.organizations.service import OrganizationContext
 
@@ -94,6 +95,18 @@ async def current_api_key(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"API key is missing scope: {exc}",
+        ) from exc
+    except EntitlementExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "code": "entitlement_exceeded",
+                "entitlement": exc.entitlement,
+                "current": exc.current,
+                "limit": exc.limit,
+                "increment": exc.increment,
+                "plan": exc.plan,
+            },
         ) from exc
     return ApiKeyPrincipalResponse(
         api_key_id=principal.api_key_id,

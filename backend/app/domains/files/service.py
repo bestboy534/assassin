@@ -5,6 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.domains.billing.service import EntitlementService
+from app.domains.billing.usage import OrganizationUsageScope
 from app.domains.jobs.models import Job
 from app.domains.jobs.service import JobService
 from app.infrastructure.queue.client import JobQueue
@@ -75,6 +77,11 @@ class FileService:
             info = self.storage.stat(stored_file.quarantine_key)
         except OSError as exc:
             raise FileNotAvailable("Uploaded object was not found") from exc
+        await EntitlementService(self.session).require_capacity(
+            OrganizationUsageScope(organization_id),
+            "storage_bytes",
+            increment=info.size,
+        )
         stored_file.size_bytes = info.size
         stored_file.status = "uploaded"
         job_service = JobService(self.session, self.queue)
