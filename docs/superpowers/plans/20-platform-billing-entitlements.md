@@ -133,7 +133,7 @@ git commit -m "feat: synchronize subscription billing"
 
 ## Task 4: 升级、降级与取消
 
-- [ ] **Step 1: 写降级影响测试**
+- [x] **Step 1: 写降级影响测试**
 
 ```py
 async def test_downgrade_preview_lists_over_limit_resources(subscription_service, pro_org):
@@ -142,15 +142,15 @@ async def test_downgrade_preview_lists_over_limit_resources(subscription_service
     assert preview.over_limit["applications"] == 43
 ```
 
-- [ ] **Step 2: 变更预览**
+- [x] **Step 2: 变更预览**
 
 返回价格、生效时间、按比例费用、丢失功能和超限资源。降级不自动删除资源。
 
-- [ ] **Step 3: 执行**
+- [x] **Step 3: 执行**
 
 升级可立即生效；降级默认下个周期；取消默认周期末，可撤销。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 python -m pytest app/domains/billing/tests/test_plan_changes.py -q
@@ -220,5 +220,5 @@ git commit -m "feat: add customer billing experience"
 - [x] 用量事件幂等。
 - [x] 旧 Webhook 不能覆盖新状态。
 - [x] 试用到期不删除数据。
-- [ ] 降级前显示影响，不静默删除。
+- [x] 降级前显示影响，不静默删除。
 - [ ] 账单入口仅组织 owner/有权限角色可见。
