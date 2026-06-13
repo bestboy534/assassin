@@ -12,7 +12,7 @@
 
 ## Task 1: 套餐与权益模型
 
-- [ ] **Step 1: 写后端限制测试**
+- [x] **Step 1: 写后端限制测试**
 
 ```py
 async def test_application_limit_is_enforced_by_service(entitlement_service, starter_org):
@@ -21,7 +21,7 @@ async def test_application_limit_is_enforced_by_service(entitlement_service, sta
         await create_application(starter_org, name="One more")
 ```
 
-- [ ] **Step 2: 创建模型**
+- [x] **Step 2: 创建模型**
 
 ```text
 plans
@@ -35,7 +35,7 @@ billing_customers
 billing_invoices
 ```
 
-- [ ] **Step 3: 权益类型**
+- [x] **Step 3: 权益类型**
 
 ```text
 boolean feature
@@ -45,7 +45,7 @@ retention duration
 support tier
 ```
 
-- [ ] **Step 4: EntitlementService**
+- [x] **Step 4: EntitlementService**
 
 ```py
 class EntitlementService:
@@ -54,7 +54,7 @@ class EntitlementService:
     async def record_usage(self, context, metric: str, amount: int, source_key: str) -> None: ...
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 python -m pytest app/domains/billing/tests/test_entitlements.py -q
@@ -222,4 +222,3 @@ git commit -m "feat: add customer billing experience"
 - [ ] 试用到期不删除数据。
 - [ ] 降级前显示影响，不静默删除。
 - [ ] 账单入口仅组织 owner/有权限角色可见。
-
