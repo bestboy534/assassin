@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import Settings, get_settings
 from app.core.database import get_session
 
 from .models import User
@@ -14,20 +15,26 @@ SESSION_COOKIE = "session"
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def set_session_cookie(response: Response, raw_token: str) -> None:
+def set_session_cookie(response: Response, raw_token: str, *, secure: bool) -> None:
     response.set_cookie(
         SESSION_COOKIE,
         raw_token,
         httponly=True,
-        secure=False,
+        secure=secure,
         samesite="lax",
         max_age=14 * 24 * 60 * 60,
         path="/",
     )
 
 
-def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(SESSION_COOKIE, path="/")
+def clear_session_cookie(response: Response, *, secure: bool) -> None:
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=secure,
+        httponly=True,
+        samesite="lax",
+    )
 
 
 async def require_user(
@@ -45,6 +52,7 @@ async def register(
     body: RegisterRequest,
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
     user_agent: Annotated[str | None, Header(alias="User-Agent")] = None,
 ) -> AuthSessionResponse:
     service = IdentityService(session)
@@ -58,12 +66,12 @@ async def register(
         )
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     except ConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    set_session_cookie(response, raw_token)
+    set_session_cookie(response, raw_token, secure=settings.is_production)
     return AuthSessionResponse(
         user=user_response(user),
         organizations=await service.organizations_for_user(user.id),
@@ -75,6 +83,7 @@ async def login(
     body: LoginRequest,
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
     user_agent: Annotated[str | None, Header(alias="User-Agent")] = None,
 ) -> AuthSessionResponse:
     service = IdentityService(session)
@@ -89,7 +98,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="邮箱或密码不正确",
         ) from exc
-    set_session_cookie(response, raw_token)
+    set_session_cookie(response, raw_token, secure=settings.is_production)
     return AuthSessionResponse(
         user=user_response(user),
         organizations=await service.organizations_for_user(user.id),
@@ -100,10 +109,11 @@ async def login(
 async def logout(
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
     raw_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
 ) -> AuthStatusResponse:
     await IdentityService(session).logout(raw_token)
-    clear_session_cookie(response)
+    clear_session_cookie(response, secure=settings.is_production)
     return AuthStatusResponse(status="logged_out")
 
 

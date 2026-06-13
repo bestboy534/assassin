@@ -4,6 +4,7 @@ import signal
 
 from app.config import get_settings
 from app.core.database import get_database
+from app.core.logging import configure_secure_logging
 from app.infrastructure.secrets import LocalSecretCipher
 
 from .delivery import HttpxWebhookSender, WebhookDeliveryService
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 async def run_webhook_worker() -> None:
     settings = get_settings()
-    logging.basicConfig(level=settings.log_level.upper())
+    configure_secure_logging(settings.log_level)
     database = get_database()
     cipher = LocalSecretCipher(settings.webhook_secret_key.get_secret_value())
     sender = HttpxWebhookSender()

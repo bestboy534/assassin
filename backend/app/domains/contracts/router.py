@@ -117,7 +117,7 @@ async def update_contract_version(
         ) from exc
     except InvalidContractDates as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Contract end date must be after start date",
         ) from exc
 

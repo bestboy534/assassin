@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import get_settings
 from .core.database import get_database
+from .core.logging import configure_secure_logging
+from .core.security import SecurityMiddleware
 from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.accounting.router import router as accounting_router
 from .domains.api_keys.router import authentication_router as api_key_authentication_router
@@ -52,7 +54,7 @@ from .schemas import (
 from .service import to_subscription_item
 
 settings = get_settings()
-logging.basicConfig(level=settings.log_level.upper())
+configure_secure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
 
 
@@ -81,6 +83,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    SecurityMiddleware,
+    allowed_origins=settings.allowed_origin_list,
 )
 app.include_router(jobs_router, prefix=settings.api_v1_prefix)
 app.include_router(files_router, prefix=settings.api_v1_prefix)

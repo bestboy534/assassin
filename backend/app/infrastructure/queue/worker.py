@@ -5,6 +5,7 @@ from uuid import UUID
 
 from app.config import get_settings
 from app.core.database import get_database
+from app.core.logging import configure_secure_logging
 from app.domains.jobs.service import InvalidJobTransition, JobService
 from app.infrastructure.storage.factory import build_storage
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 async def run_worker() -> None:
     settings = get_settings()
-    logging.basicConfig(level=settings.log_level.upper())
+    configure_secure_logging(settings.log_level)
     database = get_database()
     queue = build_queue(settings)
     storage = build_storage(settings)
