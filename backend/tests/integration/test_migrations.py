@@ -20,6 +20,12 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         }
         version = connection.execute("SELECT version_num FROM alembic_version").fetchone()
+        subscription_columns = {
+            row[1]
+            for row in connection.execute(
+                "PRAGMA table_info(organization_subscriptions)"
+            )
+        }
     assert {
         "jobs",
         "outbox_events",
@@ -76,4 +82,9 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "billing_customers",
         "billing_invoices",
     } <= tables
-    assert version == ("20260613_0019",)
+    assert {
+        "pending_plan_id",
+        "pending_change_at",
+        "pending_change_type",
+    } <= subscription_columns
+    assert version == ("20260613_0020",)

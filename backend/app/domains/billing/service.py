@@ -41,7 +41,49 @@ STARTER_ENTITLEMENTS: tuple[
     ("retention_days", "duration", 30, True),
     ("support_tier", "support_tier", "standard", False),
 )
+PRO_ENTITLEMENTS: tuple[
+    tuple[str, EntitlementValueType, bool | int | str, bool],
+    ...,
+] = (
+    ("applications", "integer", 50, True),
+    ("members", "integer", 25, True),
+    ("api_access", "boolean", True, True),
+    ("ai_pages", "metered", 1_000, False),
+    ("storage_bytes", "metered", 10_737_418_240, True),
+    ("retention_days", "duration", 365, True),
+    ("support_tier", "support_tier", "priority", False),
+)
 VALID_VALUE_TYPES = {item[1] for item in STARTER_ENTITLEMENTS}
+
+
+@dataclass(frozen=True)
+class PlanDefinition:
+    key: str
+    name: str
+    description: str
+    amount_minor: int
+    entitlements: tuple[
+        tuple[str, EntitlementValueType, bool | int | str, bool],
+        ...,
+    ]
+
+
+PLAN_DEFINITIONS = {
+    "starter": PlanDefinition(
+        key="starter",
+        name="Starter",
+        description="Default plan for existing and unconfigured organizations.",
+        amount_minor=0,
+        entitlements=STARTER_ENTITLEMENTS,
+    ),
+    "pro": PlanDefinition(
+        key="pro",
+        name="Pro",
+        description="Expanded limits, API access, and priority support.",
+        amount_minor=4_900,
+        entitlements=PRO_ENTITLEMENTS,
+    ),
+}
 
 
 class OrganizationScope(Protocol):
@@ -112,7 +154,7 @@ class EntitlementService:
             return existing
 
         async with transaction(self.session):
-            plan = await self._ensure_starter_plan()
+            plan = await self.ensure_plan(STARTER_PLAN_KEY)
             subscription = OrganizationSubscription(
                 organization_id=organization_id,
                 plan_id=plan.id,
@@ -321,15 +363,18 @@ class EntitlementService:
             await self.session.flush()
         return entitlement
 
-    async def _ensure_starter_plan(self) -> Plan:
-        plan = await self.session.scalar(select(Plan).where(Plan.key == STARTER_PLAN_KEY))
+    async def ensure_plan(self, plan_key: str) -> Plan:
+        definition = PLAN_DEFINITIONS.get(plan_key)
+        if definition is None:
+            raise EntitlementConfigurationError(f"Unknown plan: {plan_key}")
+        plan = await self.session.scalar(select(Plan).where(Plan.key == plan_key))
         if plan is None:
             plan = Plan(
-                key=STARTER_PLAN_KEY,
-                name="Starter",
-                description="Default plan for existing and unconfigured organizations.",
+                key=definition.key,
+                name=definition.name,
+                description=definition.description,
                 status="active",
-                is_default=True,
+                is_default=definition.key == STARTER_PLAN_KEY,
             )
             self.session.add(plan)
             await self.session.flush()
@@ -338,11 +383,11 @@ class EntitlementService:
                     plan_id=plan.id,
                     currency="USD",
                     billing_interval="month",
-                    amount_minor=0,
+                    amount_minor=definition.amount_minor,
                     status="active",
                 )
             )
-            for key, value_type, value, hard_limit in STARTER_ENTITLEMENTS:
+            for key, value_type, value, hard_limit in definition.entitlements:
                 self.session.add(
                     PlanEntitlement(
                         plan_id=plan.id,

@@ -126,6 +126,16 @@ class OrganizationSubscription(Base):
         nullable=False,
         index=True,
     )
+    pending_plan_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("plans.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    pending_change_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+    )
+    pending_change_type: Mapped[str | None] = mapped_column(String(32), index=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active", index=True)
     provider: Mapped[str] = mapped_column(String(40), nullable=False, default="internal")
     provider_subscription_id: Mapped[str | None] = mapped_column(String(180), index=True)
