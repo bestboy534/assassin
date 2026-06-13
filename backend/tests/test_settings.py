@@ -17,11 +17,14 @@ def test_production_accepts_postgres_redis_and_s3() -> None:
         queue_backend="redis",
         storage_backend="s3",
         payment_provider="stripe_issuing",
+        billing_provider="stripe",
+        billing_webhook_secret="production-billing-webhook-secret",
         integration_secret_key="production-integration-secret",
         webhook_secret_key="production-webhook-secret",
     )
     assert settings.is_production
     assert settings.payment_provider == "stripe_issuing"
+    assert settings.billing_provider == "stripe"
 
 
 def test_production_rejects_default_integration_secret() -> None:
@@ -33,6 +36,8 @@ def test_production_rejects_default_integration_secret() -> None:
             queue_backend="redis",
             storage_backend="s3",
             payment_provider="stripe_issuing",
+            billing_provider="stripe",
+            billing_webhook_secret="production-billing-webhook-secret",
         )
 
 
@@ -45,6 +50,8 @@ def test_production_rejects_default_webhook_secret() -> None:
             storage_backend="s3",
             auto_create_schema=False,
             payment_provider="stripe_issuing",
+            billing_provider="stripe",
+            billing_webhook_secret="production-billing-webhook-secret",
             integration_secret_key="production-integration-secret",
         )
 
@@ -58,4 +65,30 @@ def test_production_rejects_fake_payment_provider() -> None:
             queue_backend="redis",
             storage_backend="s3",
             payment_provider="fake",
+        )
+
+
+def test_production_rejects_fake_billing_provider() -> None:
+    with pytest.raises(ValidationError, match="BILLING_PROVIDER"):
+        Settings(
+            app_environment="production",
+            database_url="postgresql+asyncpg://user:password@db/app",
+            auto_create_schema=False,
+            queue_backend="redis",
+            storage_backend="s3",
+            payment_provider="stripe_issuing",
+            billing_provider="fake",
+        )
+
+
+def test_production_rejects_default_billing_webhook_secret() -> None:
+    with pytest.raises(ValidationError, match="BILLING_WEBHOOK_SECRET"):
+        Settings(
+            app_environment="production",
+            database_url="postgresql+asyncpg://user:password@db/app",
+            auto_create_schema=False,
+            queue_backend="redis",
+            storage_backend="s3",
+            payment_provider="stripe_issuing",
+            billing_provider="stripe",
         )

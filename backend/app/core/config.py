@@ -9,6 +9,7 @@ Environment = Literal["local", "test", "staging", "production"]
 QueueBackend = Literal["memory", "redis"]
 StorageBackend = Literal["local", "s3"]
 PaymentProviderBackend = Literal["fake", "stripe_issuing"]
+BillingProviderBackend = Literal["fake", "stripe"]
 IntegrationProviderBackend = Literal["fake_identity"]
 
 
@@ -55,6 +56,9 @@ class Settings(BaseSettings):
     payment_provider: PaymentProviderBackend = "fake"
     payment_webhook_secret: SecretStr = SecretStr("local-payment-webhook-secret")
     payment_webhook_tolerance_seconds: int = 300
+    billing_provider: BillingProviderBackend = "fake"
+    billing_webhook_secret: SecretStr = SecretStr("local-billing-webhook-secret")
+    billing_webhook_tolerance_seconds: int = 300
 
     integration_secret_key: SecretStr = SecretStr("local-integration-secret")
     webhook_secret_key: SecretStr = SecretStr("local-webhook-secret")
@@ -89,6 +93,15 @@ class Settings(BaseSettings):
                 raise ValueError("Production AUTO_CREATE_SCHEMA must be false; use Alembic")
             if self.payment_provider == "fake":
                 raise ValueError("Production PAYMENT_PROVIDER cannot use fake")
+            if self.billing_provider == "fake":
+                raise ValueError("Production BILLING_PROVIDER cannot use fake")
+            if (
+                self.billing_webhook_secret.get_secret_value()
+                == "local-billing-webhook-secret"
+            ):
+                raise ValueError(
+                    "Production BILLING_WEBHOOK_SECRET must be replaced"
+                )
             if self.integration_secret_key.get_secret_value() == "local-integration-secret":
                 raise ValueError("Production INTEGRATION_SECRET_KEY must be replaced")
             if self.webhook_secret_key.get_secret_value() == "local-webhook-secret":

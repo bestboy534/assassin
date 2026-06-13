@@ -1,6 +1,7 @@
 """Backward-compatible settings import."""
 
 from .core.config import (
+    BillingProviderBackend,
     Environment,
     IntegrationProviderBackend,
     PaymentProviderBackend,
@@ -11,6 +12,7 @@ from .core.config import (
 )
 
 __all__ = [
+    "BillingProviderBackend",
     "Environment",
     "IntegrationProviderBackend",
     "PaymentProviderBackend",
