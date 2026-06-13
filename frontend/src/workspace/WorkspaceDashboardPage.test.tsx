@@ -462,7 +462,7 @@ beforeEach(() => {
     if (
       url.endsWith("/api/v1/organizations/org-1/reports/metrics") &&
       method === "GET"
-    ) {
+    ){
       return Response.json({
         items: [
           {
