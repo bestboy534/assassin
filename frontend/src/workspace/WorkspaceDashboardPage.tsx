@@ -47,7 +47,7 @@ const dashboardCards = [
   ["已确认节省", "节省项目完成后自动归档", CheckCircle2],
 ] as const;
 
-const workspaceNav = [
+export const workspaceNav = [
   ["总览", "dashboard"],
   ["应用目录", "applications"],
   ["采购审批", "procurement"],
@@ -60,9 +60,15 @@ const workspaceNav = [
   ["发票会计", "invoices"],
   ["集成中心", "integrations"],
   ["报表", "reports"],
+  ["审计日志", "security/audit-log"],
+  ["合规控制", "security/compliance"],
+  ["安全事件", "security/incidents"],
+  ["数据保留", "settings/data-retention"],
+  ["API 密钥", "settings/api-keys"],
+  ["Webhook", "settings/webhooks"],
 ] as const;
 
-type WorkspaceState =
+export type WorkspaceState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | {
@@ -71,7 +77,7 @@ type WorkspaceState =
       currentOrganization: OrganizationSummary;
     };
 
-function useWorkspaceState(): WorkspaceState {
+export function useWorkspaceState(): WorkspaceState {
   const { organizationSlug } = useParams();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +109,7 @@ function useWorkspaceState(): WorkspaceState {
   return { status: "ready", session, currentOrganization };
 }
 
-function WorkspaceLoading() {
+export function WorkspaceLoading() {
   return (
     <main className="workspace-auth-required">
       <h1>正在进入工作区</h1>
@@ -112,7 +118,7 @@ function WorkspaceLoading() {
   );
 }
 
-function WorkspaceError({ message }: { message: string }) {
+export function WorkspaceError({ message }: { message: string }) {
   return (
     <main className="workspace-auth-required">
       <h1>请先登录</h1>
@@ -122,7 +128,7 @@ function WorkspaceError({ message }: { message: string }) {
   );
 }
 
-function WorkspaceShell({
+export function WorkspaceShell({
   activeSection,
   children,
   currentOrganization,

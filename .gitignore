@@ -101,6 +101,8 @@ frontend/build/
 frontend/.vite/
 frontend/.cache/
 frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
 
 # -----------------------------
 # Package manager cache

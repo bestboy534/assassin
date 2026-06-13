@@ -19,6 +19,10 @@ import { SecurityPage } from "../marketing/pages/SecurityPage";
 import { SupportMetricsPage } from "../marketing/pages/SupportMetricsPage";
 import { WorkspaceDashboardPage, WorkspaceSectionPage } from "../workspace/WorkspaceDashboardPage";
 import {
+  AccountPrivacyPage,
+  ComplianceWorkspacePage,
+} from "../workspace/ComplianceWorkspacePage";
+import {
   legacyHashPaths,
   publicPages,
   type PublicPage,
@@ -71,7 +75,32 @@ const publicRouteObjects: RouteObject[] = publicPages.flatMap(page => {
 export const routes: RouteObject[] = [
   { path: "/app/:organizationSlug", element: <WorkspaceDashboardPage /> },
   { path: "/app/:organizationSlug/dashboard", element: <WorkspaceDashboardPage /> },
+  {
+    path: "/app/:organizationSlug/security/audit-log",
+    element: <ComplianceWorkspacePage section="audit-log" />,
+  },
+  {
+    path: "/app/:organizationSlug/security/compliance",
+    element: <ComplianceWorkspacePage section="compliance" />,
+  },
+  {
+    path: "/app/:organizationSlug/security/incidents",
+    element: <ComplianceWorkspacePage section="incidents" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/data-retention",
+    element: <ComplianceWorkspacePage section="data-retention" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/api-keys",
+    element: <ComplianceWorkspacePage section="api-keys" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/webhooks",
+    element: <ComplianceWorkspacePage section="webhooks" />,
+  },
   { path: "/app/:organizationSlug/:section", element: <WorkspaceSectionPage /> },
+  { path: "/account/privacy", element: <AccountPrivacyPage /> },
   {
     element: <MarketingLayout />,
     children: [

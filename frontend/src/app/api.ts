@@ -1488,3 +1488,532 @@ export function createReportSubscription(
     },
   );
 }
+
+export type AuditLogItem = {
+  id: string;
+  organization_id: string;
+  actor_type: string;
+  actor_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  ip_address: string | null;
+  user_agent_hash: string | null;
+  request_id: string | null;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type AuditLogExport = {
+  format: "json";
+  row_count: number;
+  rows: AuditLogItem[];
+  exported_at: string;
+};
+
+export type RetentionPolicyItem = {
+  id: string;
+  organization_id: string;
+  data_type: string;
+  retention_days: number;
+  action: string;
+  description: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LegalHoldItem = {
+  id: string;
+  organization_id: string;
+  resource_type: string;
+  resource_id: string;
+  reason: string;
+  status: string;
+  expires_at: string | null;
+  created_at: string;
+};
+
+export type DeletionPreview = {
+  data_type: string;
+  cutoff_at: string | null;
+  delete_candidates: string[];
+  skipped_legal_hold: string[];
+};
+
+export type DeletionJobItem = {
+  id: string;
+  data_type: string;
+  status: string;
+  deleted_resource_ids: string[];
+  skipped_legal_hold: string[];
+  created_at: string;
+  completed_at: string | null;
+};
+
+export type PrivacyRequestItem = {
+  id: string;
+  subject_user_id: string;
+  type: "access" | "correction" | "deletion" | "portability";
+  status: string;
+  identity_verified_at: string;
+  due_at: string;
+  scope: string[];
+  requested_changes: Record<string, unknown>;
+  result: Record<string, unknown>;
+  processing_history: Array<{
+    id: string;
+    action: string;
+    metadata: Record<string, unknown>;
+    created_at: string;
+  }>;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
+export type ComplianceFrameworkItem = {
+  id: string;
+  organization_id: string;
+  code: string;
+  name: string;
+  version: string;
+  description: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ComplianceControlItem = {
+  id: string;
+  organization_id: string;
+  framework_id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: string;
+  frequency_days: number;
+  last_reviewed_at: string | null;
+  next_review_at: string | null;
+  owners: Array<{
+    id: string;
+    user_id: string;
+    role: string;
+    created_at: string;
+  }>;
+  evidence: Array<{
+    id: string;
+    stored_file_id: string;
+    title: string;
+    description: string;
+    status: string;
+    collected_at: string;
+    expires_at: string | null;
+    created_at: string;
+  }>;
+  reviews: Array<{
+    id: string;
+    reviewer_user_id: string;
+    outcome: string;
+    notes: string;
+    reviewed_at: string;
+    next_review_at: string | null;
+    created_at: string;
+  }>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IncidentTaskItem = {
+  id: string;
+  title: string;
+  status: string;
+  assignee_user_id: string | null;
+  due_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SecurityIncidentItem = {
+  id: string;
+  organization_id: string;
+  title: string;
+  severity: string;
+  status: string;
+  summary: string;
+  detected_at: string;
+  resolved_at: string | null;
+  tasks: IncidentTaskItem[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApiKeyItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  prefix: string;
+  scopes: string[];
+  last_used_at: string | null;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+};
+
+export type ApiKeyCreated = ApiKeyItem & { secret: string };
+
+export type ApiKeyPrincipal = {
+  api_key_id: string;
+  organization_id: string;
+  name: string;
+  scopes: string[];
+};
+
+export type WebhookEndpointItem = {
+  id: string;
+  organization_id: string;
+  name: string;
+  url: string;
+  events: string[];
+  status: string;
+  secret_version: number;
+  previous_secret_expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WebhookEndpointCreated = WebhookEndpointItem & { secret: string };
+
+export type WebhookDeliveryItem = {
+  id: string;
+  endpoint_id: string;
+  event_id: string;
+  event_type: string;
+  status: string;
+  attempts: number;
+  next_attempt_at: string;
+  response_status: number | null;
+  last_error: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function listAuditLogs(organizationId: string) {
+  return request<{ items: AuditLogItem[] }>(
+    `/api/v1/organizations/${organizationId}/audit-logs`,
+  );
+}
+
+export function exportAuditLogs(organizationId: string) {
+  return request<AuditLogExport>(
+    `/api/v1/organizations/${organizationId}/audit-logs/export`,
+    { method: "POST", body: JSON.stringify({ format: "json" }) },
+  );
+}
+
+export function createRetentionPolicy(
+  organizationId: string,
+  input: { retention_days: number; description: string },
+) {
+  return request<RetentionPolicyItem>(
+    `/api/v1/organizations/${organizationId}/retention-policies`,
+    {
+      method: "POST",
+      body: JSON.stringify({ data_type: "stored_file", ...input }),
+    },
+  );
+}
+
+export function createLegalHold(
+  organizationId: string,
+  input: {
+    resource_type: "stored_file" | "user";
+    resource_id: string;
+    reason: string;
+    expires_at?: string | null;
+  },
+) {
+  return request<LegalHoldItem>(
+    `/api/v1/organizations/${organizationId}/legal-holds`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function previewRetentionDeletion(organizationId: string) {
+  return request<DeletionPreview>(
+    `/api/v1/organizations/${organizationId}/retention/deletion-preview?data_type=stored_file`,
+  );
+}
+
+export function executeRetentionDeletion(
+  organizationId: string,
+  reauthConfirmed: boolean,
+) {
+  return request<DeletionJobItem>(
+    `/api/v1/organizations/${organizationId}/retention/deletion-jobs`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        data_type: "stored_file",
+        reauth_confirmed: reauthConfirmed,
+      }),
+    },
+  );
+}
+
+export function listPrivacyRequests() {
+  return request<{ items: PrivacyRequestItem[] }>("/api/v1/privacy/requests");
+}
+
+export function createPrivacyRequest(input: {
+  type: PrivacyRequestItem["type"];
+  scope: string[];
+  requested_changes?: Record<string, string>;
+}) {
+  return request<PrivacyRequestItem>("/api/v1/privacy/requests", {
+    method: "POST",
+    body: JSON.stringify({
+      requested_changes: {},
+      ...input,
+    }),
+  });
+}
+
+export function processPrivacyRequest(requestId: string, reauthConfirmed: boolean) {
+  return request<PrivacyRequestItem>(
+    `/api/v1/privacy/requests/${requestId}/process`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reauth_confirmed: reauthConfirmed }),
+    },
+  );
+}
+
+export function listComplianceFrameworks(organizationId: string) {
+  return request<{ items: ComplianceFrameworkItem[] }>(
+    `/api/v1/organizations/${organizationId}/compliance/frameworks`,
+  );
+}
+
+export function createComplianceFramework(
+  organizationId: string,
+  input: { code: string; name: string; version: string; description: string },
+) {
+  return request<ComplianceFrameworkItem>(
+    `/api/v1/organizations/${organizationId}/compliance/frameworks`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function createComplianceControl(
+  organizationId: string,
+  frameworkId: string,
+  input: {
+    code: string;
+    title: string;
+    description: string;
+    frequency_days: number;
+  },
+) {
+  return request<ComplianceControlItem>(
+    `/api/v1/organizations/${organizationId}/compliance/frameworks/${frameworkId}/controls`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function getComplianceControl(organizationId: string, controlId: string) {
+  return request<ComplianceControlItem>(
+    `/api/v1/organizations/${organizationId}/compliance/controls/${controlId}`,
+  );
+}
+
+export function assignComplianceControlOwner(
+  organizationId: string,
+  controlId: string,
+  input: { user_id: string; role: "owner" | "reviewer" },
+) {
+  return request<ComplianceControlItem["owners"][number]>(
+    `/api/v1/organizations/${organizationId}/compliance/controls/${controlId}/owners`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function addComplianceEvidence(
+  organizationId: string,
+  controlId: string,
+  input: {
+    stored_file_id: string;
+    title: string;
+    description: string;
+    collected_at?: string | null;
+    expires_at?: string | null;
+  },
+) {
+  return request<ComplianceControlItem["evidence"][number]>(
+    `/api/v1/organizations/${organizationId}/compliance/controls/${controlId}/evidence`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function reviewComplianceControl(
+  organizationId: string,
+  controlId: string,
+  input: {
+    outcome: "effective" | "ineffective" | "needs_attention";
+    notes: string;
+  },
+) {
+  return request<ComplianceControlItem["reviews"][number]>(
+    `/api/v1/organizations/${organizationId}/compliance/controls/${controlId}/reviews`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function listSecurityIncidents(organizationId: string) {
+  return request<{ items: SecurityIncidentItem[] }>(
+    `/api/v1/organizations/${organizationId}/security/incidents`,
+  );
+}
+
+export function createSecurityIncident(
+  organizationId: string,
+  input: {
+    title: string;
+    severity: "low" | "medium" | "high" | "critical";
+    summary: string;
+    detected_at: string;
+  },
+) {
+  return request<SecurityIncidentItem>(
+    `/api/v1/organizations/${organizationId}/security/incidents`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function createSecurityIncidentTask(
+  organizationId: string,
+  incidentId: string,
+  input: { title: string; assignee_user_id?: string | null; due_at?: string | null },
+) {
+  return request<IncidentTaskItem>(
+    `/api/v1/organizations/${organizationId}/security/incidents/${incidentId}/tasks`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function updateSecurityIncidentTask(
+  organizationId: string,
+  incidentId: string,
+  taskId: string,
+  status: "open" | "in_progress" | "completed" | "cancelled",
+) {
+  return request<IncidentTaskItem>(
+    `/api/v1/organizations/${organizationId}/security/incidents/${incidentId}/tasks/${taskId}`,
+    { method: "PATCH", body: JSON.stringify({ status }) },
+  );
+}
+
+export function listApiKeys(organizationId: string) {
+  return request<{ items: ApiKeyItem[] }>(
+    `/api/v1/organizations/${organizationId}/api-keys`,
+  );
+}
+
+export function createApiKey(
+  organizationId: string,
+  input: { name: string; scopes: string[]; expires_at?: string | null },
+) {
+  return request<ApiKeyCreated>(
+    `/api/v1/organizations/${organizationId}/api-keys`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function verifyApiKey(secret: string, requiredScope?: string) {
+  const query = requiredScope
+    ? `?required_scope=${encodeURIComponent(requiredScope)}`
+    : "";
+  return request<ApiKeyPrincipal>(`/api/v1/api-keys/current${query}`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+}
+
+export function revokeApiKey(organizationId: string, apiKeyId: string) {
+  return request<ApiKeyItem>(
+    `/api/v1/organizations/${organizationId}/api-keys/${apiKeyId}/revoke`,
+    { method: "POST" },
+  );
+}
+
+export function listWebhookEndpoints(organizationId: string) {
+  return request<{ items: WebhookEndpointItem[] }>(
+    `/api/v1/organizations/${organizationId}/webhooks`,
+  );
+}
+
+export function createWebhookEndpoint(
+  organizationId: string,
+  input: { name: string; url: string; events: string[] },
+) {
+  return request<WebhookEndpointCreated>(
+    `/api/v1/organizations/${organizationId}/webhooks`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function rotateWebhookSecret(
+  organizationId: string,
+  endpointId: string,
+  overlapSeconds = 3600,
+) {
+  return request<{
+    id: string;
+    secret: string;
+    secret_version: number;
+    previous_secret_expires_at: string;
+  }>(
+    `/api/v1/organizations/${organizationId}/webhooks/${endpointId}/rotate-secret`,
+    {
+      method: "POST",
+      body: JSON.stringify({ overlap_seconds: overlapSeconds }),
+    },
+  );
+}
+
+export function testWebhookEndpoint(
+  organizationId: string,
+  endpointId: string,
+  eventType: string,
+) {
+  return request<WebhookDeliveryItem>(
+    `/api/v1/organizations/${organizationId}/webhooks/${endpointId}/test`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        event_type: eventType,
+        payload: { source: "web-console", sent_at: new Date().toISOString() },
+      }),
+    },
+  );
+}
+
+export function listWebhookDeliveries(organizationId: string, endpointId: string) {
+  return request<{ items: WebhookDeliveryItem[] }>(
+    `/api/v1/organizations/${organizationId}/webhooks/${endpointId}/deliveries`,
+  );
+}
+
+export function retryWebhookDelivery(
+  organizationId: string,
+  endpointId: string,
+  deliveryId: string,
+) {
+  return request<WebhookDeliveryItem>(
+    `/api/v1/organizations/${organizationId}/webhooks/${endpointId}/deliveries/${deliveryId}/retry`,
+    { method: "POST" },
+  );
+}
