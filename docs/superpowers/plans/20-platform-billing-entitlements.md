@@ -64,7 +64,7 @@ git commit -m "feat: add plan entitlements and limits"
 
 ## Task 2: 试用与组织订阅
 
-- [ ] **Step 1: 写试用到期测试**
+- [x] **Step 1: 写试用到期测试**
 
 ```py
 async def test_expired_trial_becomes_read_only_not_deleted(subscription_service, trial_org):
@@ -73,7 +73,7 @@ async def test_expired_trial_becomes_read_only_not_deleted(subscription_service,
     assert await organization_data_exists(trial_org.id)
 ```
 
-- [ ] **Step 2: 状态**
+- [x] **Step 2: 状态**
 
 ```text
 trialing
@@ -86,11 +86,11 @@ cancelled
 enterprise_contract
 ```
 
-- [ ] **Step 3: 试用规则**
+- [x] **Step 3: 试用规则**
 
 默认试用期限、提醒、可选延长和到期只读。数据按保留策略保留，不立即删除。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 python -m pytest app/domains/billing/tests/test_subscriptions.py -q
