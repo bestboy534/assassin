@@ -100,7 +100,7 @@ git commit -m "feat: add organization subscription lifecycle"
 
 ## Task 3: 计费 Provider 与 Webhook
 
-- [ ] **Step 1: 写事件顺序测试**
+- [x] **Step 1: 写事件顺序测试**
 
 ```py
 async def test_out_of_order_webhook_does_not_revert_newer_subscription(billing_handler, events):
@@ -109,7 +109,7 @@ async def test_out_of_order_webhook_does_not_revert_newer_subscription(billing_h
     assert (await subscription()).provider_version == events.subscription_updated_new.version
 ```
 
-- [ ] **Step 2: Adapter**
+- [x] **Step 2: Adapter**
 
 ```py
 class BillingProvider(Protocol):
@@ -119,11 +119,11 @@ class BillingProvider(Protocol):
     def verify_webhook(self, headers, body: bytes) -> BillingEvent: ...
 ```
 
-- [ ] **Step 3: 事件**
+- [x] **Step 3: 事件**
 
 客户、订阅、发票、付款成功/失败、退款和争议。事件 ID 幂等，provider version 防止旧事件覆盖。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 python -m pytest app/domains/billing/tests/test_webhooks.py -q
@@ -216,9 +216,9 @@ git commit -m "feat: add customer billing experience"
 
 ## 完成验收
 
-- [ ] 权益由后端执行。
-- [ ] 用量事件幂等。
-- [ ] 旧 Webhook 不能覆盖新状态。
-- [ ] 试用到期不删除数据。
+- [x] 权益由后端执行。
+- [x] 用量事件幂等。
+- [x] 旧 Webhook 不能覆盖新状态。
+- [x] 试用到期不删除数据。
 - [ ] 降级前显示影响，不静默删除。
 - [ ] 账单入口仅组织 owner/有权限角色可见。
