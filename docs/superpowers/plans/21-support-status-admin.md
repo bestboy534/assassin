@@ -133,7 +133,7 @@ git commit -m "feat: publish product service status"
 
 ## Task 4: 平台组织与用户后台
 
-- [ ] **Step 1: 写平台角色测试**
+- [x] **Step 1: 写平台角色测试**
 
 ```py
 async def test_organization_admin_cannot_access_platform_admin(client, organization_admin):
@@ -141,7 +141,7 @@ async def test_organization_admin_cannot_access_platform_admin(client, organizat
     assert response.status_code == 403
 ```
 
-- [ ] **Step 2: 页面与 API**
+- [x] **Step 2: 页面与 API**
 
 ```text
 /admin/organizations
@@ -156,15 +156,15 @@ async def test_organization_admin_cannot_access_platform_admin(client, organizat
 /admin/cancellation-routes
 ```
 
-- [ ] **Step 3: 高风险操作**
+- [x] **Step 3: 高风险操作**
 
 暂停组织、封禁用户、重放任务、修改套餐、启用功能开关需要理由、重新认证和审计。
 
-- [ ] **Step 4: 禁止任意 SQL**
+- [x] **Step 4: 禁止任意 SQL**
 
 后台不提供 SQL 控制台。数据修复通过版本化 CLI 命令或显式 repair action。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 python -m pytest app/domains/admin/tests -q
@@ -230,9 +230,9 @@ git commit -m "feat: add customer support and admin operations"
 
 ## 完成验收
 
-- [ ] 客户工单组织隔离。
-- [ ] 支持默认不能访问业务数据。
-- [ ] 诊断授权有范围、原因、期限和审计。
+- [x] 客户工单组织隔离。
+- [x] 支持默认不能访问业务数据。
+- [x] 诊断授权有范围、原因、期限和审计。
 - [x] 状态页不泄露内部细节。
-- [ ] 后台高风险操作需要重新认证。
-- [ ] 无任意 SQL 或无审计修复入口。
+- [x] 后台高风险操作需要重新认证。
+- [x] 无任意 SQL 或无审计修复入口。
