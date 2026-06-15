@@ -93,7 +93,7 @@ git commit -m "feat: add time bounded support access"
 
 ## Task 3: 系统状态页
 
-- [ ] **Step 1: 写组件状态测试**
+- [x] **Step 1: 写组件状态测试**
 
 ```py
 async def test_active_incident_degrades_component_status(status_service, incident):
@@ -101,7 +101,7 @@ async def test_active_incident_degrades_component_status(status_service, inciden
     assert (await status_service.component(incident.component_id)).status == "degraded"
 ```
 
-- [ ] **Step 2: 模型**
+- [x] **Step 2: 模型**
 
 ```text
 status_components
@@ -110,7 +110,7 @@ status_incident_updates
 status_subscribers
 ```
 
-- [ ] **Step 3: 公开端点**
+- [x] **Step 3: 公开端点**
 
 ```text
 GET /status
@@ -120,11 +120,11 @@ POST /status/subscriptions
 
 公开数据不泄露内部供应商或安全细节。
 
-- [ ] **Step 4: 事件流程**
+- [x] **Step 4: 事件流程**
 
 investigating -> identified -> monitoring -> resolved；每次更新带时间和公开说明。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add backend/app/domains/status frontend/src/marketing/pages/StatusPage.tsx
@@ -233,6 +233,6 @@ git commit -m "feat: add customer support and admin operations"
 - [ ] 客户工单组织隔离。
 - [ ] 支持默认不能访问业务数据。
 - [ ] 诊断授权有范围、原因、期限和审计。
-- [ ] 状态页不泄露内部细节。
+- [x] 状态页不泄露内部细节。
 - [ ] 后台高风险操作需要重新认证。
 - [ ] 无任意 SQL 或无审计修复入口。
