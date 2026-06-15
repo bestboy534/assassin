@@ -204,7 +204,7 @@ git commit -m "feat: manage versioned platform knowledge"
 
 ## Task 6: 支持与后台前端
 
-- [ ] **Step 1: 客户页面**
+- [x] **Step 1: 客户页面**
 
 ```text
 /app/:org/support
@@ -213,15 +213,15 @@ git commit -m "feat: manage versioned platform knowledge"
 /app/:org/settings/support-access
 ```
 
-- [ ] **Step 2: 平台后台**
+- [x] **Step 2: 平台后台**
 
 使用独立 AdminLayout 和平台权限；显著显示当前环境，生产高风险按钮采用危险样式与二次确认。
 
-- [ ] **Step 3: E2E**
+- [x] **Step 3: E2E**
 
 客户开工单 -> 支持回复 -> 客户授权诊断 -> 支持查看同步错误 -> 授权过期；平台发布状态事件 -> 订阅者收到更新。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 git add frontend/src/workspace/support frontend/src/admin
