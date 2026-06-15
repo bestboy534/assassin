@@ -232,7 +232,7 @@ async def create_privacy_request(
         ) from exc
     except InvalidPrivacyRequest as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
 

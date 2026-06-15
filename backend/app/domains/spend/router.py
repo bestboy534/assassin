@@ -163,7 +163,7 @@ async def set_transaction_splits(
         raise HTTPException(status_code=404, detail="Transaction not found") from exc
     except InvalidTransactionSplits as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Transaction splits must equal the transaction amount",
         ) from exc
     except PeriodLocked as exc:

@@ -95,10 +95,12 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
             "feature_flags",
             "email_deliveries",
             "platform_audit_logs",
+            "platform_knowledge_entries",
+            "platform_knowledge_versions",
         } <= tables
     assert {
         "pending_plan_id",
         "pending_change_at",
         "pending_change_type",
     } <= subscription_columns
-    assert version == ("20260615_0023",)
+    assert version == ("20260615_0024",)

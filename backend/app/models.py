@@ -11,6 +11,10 @@ from .domains.accounting.models import (
     InvoiceMatch,
     InvoiceVersion,
 )
+from .domains.admin.knowledge_models import (
+    PlatformKnowledgeEntry,
+    PlatformKnowledgeVersion,
+)
 from .domains.admin.models import EmailDelivery, FeatureFlag, PlatformAuditLog
 from .domains.api_keys.models import ApiKey
 from .domains.applications.models import Application, ApplicationSource
@@ -169,6 +173,8 @@ __all__ = [
     "PlanEntitlement",
     "PlanPrice",
     "PlatformAuditLog",
+    "PlatformKnowledgeEntry",
+    "PlatformKnowledgeVersion",
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",

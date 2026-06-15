@@ -14,7 +14,6 @@ from app.infrastructure.queue.client import JobQueue
 from .schemas import (
     AdminEmailDeliveryList,
     AdminIntegrationList,
-    AdminItemsResponse,
     AdminJobList,
     AdminOrganizationList,
     AdminResourceStatus,
@@ -109,20 +108,6 @@ async def list_email_deliveries(
     service: Annotated[PlatformAdminService, Depends(service_for)],
 ) -> AdminEmailDeliveryList:
     return await service.email_deliveries()
-
-
-@router.get("/software-directory", response_model=AdminItemsResponse)
-async def list_software_directory(
-    _service: Annotated[PlatformAdminService, Depends(service_for)],
-) -> AdminItemsResponse:
-    return AdminItemsResponse(items=[])
-
-
-@router.get("/cancellation-routes", response_model=AdminItemsResponse)
-async def list_cancellation_routes(
-    _service: Annotated[PlatformAdminService, Depends(service_for)],
-) -> AdminItemsResponse:
-    return AdminItemsResponse(items=[])
 
 
 @router.post(
