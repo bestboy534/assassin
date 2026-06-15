@@ -140,6 +140,7 @@ export const footerColumns = [
       { label: "播客", to: "/podcasts" },
       { label: "合作伙伴", to: "/become-a-partner" },
       { label: "安全中心", to: "/security" },
+      { label: "系统状态", to: "/status" },
     ],
   },
   {

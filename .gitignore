@@ -16,11 +16,8 @@ desktop.ini
 *.swn
 
 # -----------------------------
-# Env / Secrets
+# Secrets
 # -----------------------------
-.env
-.env.*
-!.env.example
 
 *.pem
 *.key
@@ -52,8 +49,6 @@ __pycache__/
 
 .venv/
 venv/
-env/
-ENV/
 
 pip-wheel-metadata/
 pip-log.txt
@@ -167,12 +162,6 @@ temp/
 *.tar.gz
 *.rar
 *.7z
-
-# -----------------------------
-# Docker
-# -----------------------------
-.docker/
-docker-compose.override.yml
 
 # -----------------------------
 # Misc

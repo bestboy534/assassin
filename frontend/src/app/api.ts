@@ -86,6 +86,42 @@ export type BillingChangePreview = {
   over_limit: Record<string, number>;
 };
 
+export type PublicStatusComponent = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  status: string;
+};
+
+export type PublicIncidentUpdate = {
+  id: string;
+  status: string;
+  message: string;
+  created_at: string;
+};
+
+export type PublicStatusIncident = {
+  id: string;
+  component_id: string;
+  component_name: string;
+  title: string;
+  summary: string;
+  impact: string;
+  status: string;
+  started_at: string;
+  resolved_at: string | null;
+  postmortem_summary: string | null;
+  updates: PublicIncidentUpdate[];
+};
+
+export type PublicStatusOverview = {
+  overall_status: string;
+  generated_at: string;
+  components: PublicStatusComponent[];
+  incidents: PublicStatusIncident[];
+};
+
 export type ApplicationItem = {
   id: string;
   organization_id: string;
@@ -2162,4 +2198,15 @@ export function createBillingPortalSession(
       body: JSON.stringify({ return_url: returnUrl }),
     },
   );
+}
+
+export function getPublicStatus() {
+  return request<PublicStatusOverview>("/api/v1/status");
+}
+
+export function subscribeToStatus(email: string) {
+  return request<{ status: string }>("/api/v1/status/subscriptions", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 }

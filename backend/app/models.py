@@ -87,6 +87,12 @@ from .domains.spend.models import (
     TransactionAnomaly,
     TransactionSplit,
 )
+from .domains.status_page.models import (
+    StatusComponent,
+    StatusIncident,
+    StatusIncidentUpdate,
+    StatusSubscriber,
+)
 from .domains.support.models import (
     SupportAccessLog,
     SupportAttachment,
@@ -172,6 +178,10 @@ __all__ = [
     "SavedReport",
     "StoredFile",
     "SpendTransaction",
+    "StatusComponent",
+    "StatusIncident",
+    "StatusIncidentUpdate",
+    "StatusSubscriber",
     "SupportAccessLog",
     "SupportAttachment",
     "SupportGrant",

@@ -38,6 +38,7 @@ from .domains.procurement.router import (
 from .domains.reports.router import router as reports_router
 from .domains.savings.router import router as savings_router
 from .domains.spend.router import router as spend_router
+from .domains.status_page.router import router as status_page_router
 from .domains.support.router import grant_access_router as support_grant_access_router
 from .domains.support.router import (
     grant_management_router as support_grant_management_router,
@@ -118,6 +119,7 @@ app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 app.include_router(spend_router, prefix=settings.api_v1_prefix)
 app.include_router(savings_router, prefix=settings.api_v1_prefix)
 app.include_router(reports_router, prefix=settings.api_v1_prefix)
+app.include_router(status_page_router, prefix=settings.api_v1_prefix)
 app.include_router(support_ticket_router, prefix=settings.api_v1_prefix)
 app.include_router(support_grant_management_router, prefix=settings.api_v1_prefix)
 app.include_router(support_grant_access_router, prefix=settings.api_v1_prefix)

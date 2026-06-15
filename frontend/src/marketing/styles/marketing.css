@@ -5248,3 +5248,455 @@ header button[aria-label] {
     margin-left: 0;
   }
 }
+
+.public-status-page {
+  background: #f7fafb;
+  color: #171b46;
+}
+
+.public-status-hero {
+  border-bottom: 1px solid #dce6ea;
+  background: #fff;
+  padding: 80px 20px 62px;
+}
+
+.public-status-hero-inner,
+.public-status-content,
+.public-status-subscribe {
+  width: min(100%, 920px);
+  margin: 0 auto;
+}
+
+.public-status-hero h1 {
+  margin: 10px 0 28px;
+  font-size: clamp(2.5rem, 6vw, 4.8rem);
+  line-height: 1.04;
+  letter-spacing: 0;
+  font-weight: 950;
+}
+
+.public-status-overall {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+  border: 1px solid #b9e5cf;
+  border-radius: 8px;
+  background: #effaf4;
+  padding: 18px 22px;
+  color: #146c43;
+}
+
+.public-status-overall.is-degraded,
+.public-status-overall.is-maintenance {
+  border-color: #f1d18a;
+  background: #fff9e9;
+  color: #8a5a00;
+}
+
+.public-status-overall.is-partial_outage,
+.public-status-overall.is-major_outage {
+  border-color: #efb5b5;
+  background: #fff3f3;
+  color: #a72b2b;
+}
+
+.public-status-overall > svg {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+}
+
+.public-status-overall strong,
+.public-status-overall span {
+  display: block;
+}
+
+.public-status-overall strong {
+  font-size: 1.06rem;
+  font-weight: 950;
+}
+
+.public-status-overall span {
+  margin-top: 4px;
+  color: #526070;
+  line-height: 1.6;
+}
+
+.public-status-updated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: #6d7886;
+  font-size: 0.88rem;
+}
+
+.public-status-updated svg {
+  width: 15px;
+  height: 15px;
+}
+
+.public-status-content {
+  padding: 64px 20px 80px;
+}
+
+.public-status-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.public-status-section-heading h2 {
+  margin: 8px 0 0;
+  font-size: 2rem;
+  letter-spacing: 0;
+  font-weight: 950;
+}
+
+.public-status-section-heading > span {
+  color: #6d7886;
+  font-size: 0.9rem;
+}
+
+.public-status-components {
+  margin-top: 24px;
+  border-top: 1px solid #dce6ea;
+}
+
+.public-status-components article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 92px;
+  border-bottom: 1px solid #dce6ea;
+  padding: 18px 4px;
+}
+
+.public-status-components h3,
+.public-status-components p {
+  margin: 0;
+}
+
+.public-status-components h3 {
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.public-status-components p {
+  margin-top: 5px;
+  color: #647181;
+  line-height: 1.6;
+}
+
+.public-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: #16734a;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.public-status-badge i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #21a66b;
+}
+
+.public-status-badge.is-degraded,
+.public-status-badge.is-maintenance {
+  color: #8a5a00;
+}
+
+.public-status-badge.is-degraded i,
+.public-status-badge.is-maintenance i {
+  background: #d99a16;
+}
+
+.public-status-badge.is-partial_outage,
+.public-status-badge.is-major_outage {
+  color: #a72b2b;
+}
+
+.public-status-badge.is-partial_outage i,
+.public-status-badge.is-major_outage i {
+  background: #cf4242;
+}
+
+.public-status-incidents-heading {
+  margin-top: 72px;
+}
+
+.public-status-incidents {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.public-status-incidents > article {
+  border: 1px solid #dce6ea;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.public-status-incidents header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #e6edef;
+  padding: 24px;
+}
+
+.public-status-incidents header span {
+  color: #3f469e;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.public-status-incidents h3 {
+  margin: 7px 0 0;
+  font-size: 1.22rem;
+  letter-spacing: 0;
+  font-weight: 950;
+}
+
+.public-status-incidents header p {
+  margin: 9px 0 0;
+  color: #5f6d7c;
+  line-height: 1.7;
+}
+
+.public-status-incidents header > strong {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #fff3d6;
+  padding: 7px 10px;
+  color: #8a5a00;
+  font-size: 0.78rem;
+}
+
+.public-status-incidents ol {
+  margin: 0;
+  padding: 10px 24px 24px;
+  list-style: none;
+}
+
+.public-status-incidents li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.public-status-incidents li > span {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border: 2px solid #3f469e;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.public-status-incidents li > div > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.public-status-incidents li strong {
+  font-size: 0.9rem;
+}
+
+.public-status-incidents time {
+  color: #7a8591;
+  font-size: 0.82rem;
+}
+
+.public-status-incidents li p {
+  margin: 6px 0 0;
+  color: #5f6d7c;
+  line-height: 1.7;
+}
+
+.public-status-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  border-top: 1px solid #dce6ea;
+  border-bottom: 1px solid #dce6ea;
+  padding: 24px 4px;
+  color: #16734a;
+}
+
+.public-status-empty svg {
+  width: 24px;
+  height: 24px;
+}
+
+.public-status-empty strong,
+.public-status-empty span {
+  display: block;
+}
+
+.public-status-empty span {
+  margin-top: 4px;
+  color: #647181;
+}
+
+.public-status-error {
+  margin-bottom: 32px;
+  border: 1px solid #efb5b5;
+  border-radius: 6px;
+  background: #fff3f3;
+  padding: 14px 16px;
+  color: #a72b2b;
+  font-weight: 800;
+}
+
+.public-status-subscribe {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(320px, 1.15fr);
+  gap: 48px;
+  align-items: center;
+  border-top: 1px solid #dce6ea;
+  padding: 52px 20px 72px;
+}
+
+.public-status-subscribe > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.public-status-subscribe > div > svg {
+  width: 24px;
+  height: 24px;
+  color: #3f469e;
+}
+
+.public-status-subscribe h2,
+.public-status-subscribe p {
+  margin: 0;
+}
+
+.public-status-subscribe h2 {
+  font-size: 1.4rem;
+  letter-spacing: 0;
+  font-weight: 950;
+}
+
+.public-status-subscribe > div p {
+  margin-top: 8px;
+  color: #647181;
+  line-height: 1.7;
+}
+
+.public-status-subscribe form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #313861;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.public-status-subscribe form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.public-status-subscribe input {
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #cdd9df;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 13px;
+  color: #171b46;
+  font: inherit;
+}
+
+.public-status-subscribe button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 6px;
+  background: #20245f;
+  padding: 0 18px;
+  color: #fff;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.public-status-subscribe button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.public-status-subscription-success,
+.public-status-subscription-error {
+  margin-top: 10px !important;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.public-status-subscription-success {
+  color: #16734a;
+}
+
+.public-status-subscription-error {
+  color: #a72b2b;
+}
+
+@media (max-width: 720px) {
+  .public-status-hero {
+    padding-top: 56px;
+  }
+
+  .public-status-section-heading,
+  .public-status-components article,
+  .public-status-incidents header {
+    align-items: flex-start;
+  }
+
+  .public-status-components article,
+  .public-status-incidents header {
+    flex-direction: column;
+  }
+
+  .public-status-subscribe {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-status-hero,
+  .public-status-content,
+  .public-status-subscribe {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .public-status-subscribe form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .public-status-subscribe button {
+    width: 100%;
+  }
+
+  .public-status-incidents li > div > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

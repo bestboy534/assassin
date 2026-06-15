@@ -17,6 +17,7 @@ import { NotFoundPage } from "../marketing/pages/NotFoundPage";
 import { PricingPage } from "../marketing/pages/PricingPage";
 import { ReportPage } from "../marketing/pages/ReportPage";
 import { SecurityPage } from "../marketing/pages/SecurityPage";
+import { StatusPage } from "../marketing/pages/StatusPage";
 import { SupportMetricsPage } from "../marketing/pages/SupportMetricsPage";
 import { WorkspaceDashboardPage, WorkspaceSectionPage } from "../workspace/WorkspaceDashboardPage";
 import {
@@ -124,6 +125,7 @@ export const routes: RouteObject[] = [
       { path: "/podcasts/:contentSlug", element: <ContentDetailPage kind="podcasts" /> },
       { path: "/press/:contentSlug", element: <ContentDetailPage kind="press" /> },
       { path: "/careers/:roleSlug", element: <CareerDetailPage /> },
+      { path: "/status", element: <StatusPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
