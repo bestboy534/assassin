@@ -174,7 +174,7 @@ git commit -m "feat: add controlled platform administration"
 
 ## Task 5: 全局目录与规则管理
 
-- [ ] **Step 1: 写发布版本测试**
+- [x] **Step 1: 写发布版本测试**
 
 ```py
 async def test_cancel_route_change_requires_publish(rule_service, route):
@@ -184,7 +184,7 @@ async def test_cancel_route_change_requires_publish(rule_service, route):
     assert (await public_route(route.id)).url == draft.url
 ```
 
-- [ ] **Step 2: 管理对象**
+- [x] **Step 2: 管理对象**
 
 - 软件目录
 - 供应商目录
@@ -195,7 +195,7 @@ async def test_cancel_route_change_requires_publish(rule_service, route):
 
 均使用草稿、审核、发布和回滚版本。
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```powershell
 git add backend/app/domains/admin frontend/src/admin/catalog
