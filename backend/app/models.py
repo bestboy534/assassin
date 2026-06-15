@@ -11,6 +11,7 @@ from .domains.accounting.models import (
     InvoiceMatch,
     InvoiceVersion,
 )
+from .domains.admin.models import EmailDelivery, FeatureFlag, PlatformAuditLog
 from .domains.api_keys.models import ApiKey
 from .domains.applications.models import Application, ApplicationSource
 from .domains.audit_ai.models import AnalysisItem, AnalysisRun
@@ -121,6 +122,8 @@ __all__ = [
     "ControlReview",
     "DeletionJob",
     "DeletionJobItem",
+    "EmailDelivery",
+    "FeatureFlag",
     "IncidentTask",
     "LegalHold",
     "PrivacyRequest",
@@ -165,6 +168,7 @@ __all__ = [
     "Plan",
     "PlanEntitlement",
     "PlanPrice",
+    "PlatformAuditLog",
     "PurchaseRequest",
     "RiskFinding",
     "Renewal",

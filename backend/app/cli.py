@@ -2,14 +2,17 @@ import argparse
 import asyncio
 import json
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
 
 from app.core.database import Database, get_database
+from app.domains.admin.models import PlatformAuditLog
 from app.domains.audit_ai.models import AnalysisItem, AnalysisRun
+from app.domains.identity.models import User
+from app.domains.identity.security import normalize_email
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,6 +23,17 @@ def parse_args() -> argparse.Namespace:
         help="Idempotently import legacy analysis history into DATABASE_URL",
     )
     migrate.add_argument("--source", required=True, type=Path)
+    platform_role = subparsers.add_parser(
+        "set-platform-role",
+        help="Assign or clear a controlled platform role for an existing user",
+    )
+    platform_role.add_argument("--email", required=True)
+    platform_role.add_argument(
+        "--role",
+        required=True,
+        choices=("platform_admin", "support_agent", "none"),
+    )
+    platform_role.add_argument("--reason", required=True)
     return parser.parse_args()
 
 
@@ -107,11 +121,60 @@ async def migrate_sqlite_analysis(
     return imported
 
 
+async def assign_platform_role(
+    email: str,
+    role: str,
+    database: Database | None = None,
+    *,
+    reason: str,
+) -> str | None:
+    if role not in {"platform_admin", "support_agent", "none"}:
+        raise ValueError("Unsupported platform role")
+    if len(reason.strip()) < 5:
+        raise ValueError("A reason of at least 5 characters is required")
+    target = database or get_database()
+    owns_database = database is None
+    normalized_email = normalize_email(email)
+    async with target.session_factory() as session:
+        user = await session.scalar(
+            select(User).where(User.email_normalized == normalized_email)
+        )
+        if user is None:
+            raise LookupError(f"User not found: {normalized_email}")
+        before_role = user.platform_role
+        assigned_role = None if role == "none" else role
+        user.platform_role = assigned_role
+        session.add(
+            PlatformAuditLog(
+                actor_type="cli",
+                actor_user_id=None,
+                action="platform.user_role_assigned",
+                resource_type="user",
+                resource_id=str(user.id),
+                reason=reason.strip(),
+                before_json={"platform_role": before_role},
+                after_json={"platform_role": assigned_role},
+                reauth_confirmed_at=datetime.now(UTC),
+            )
+        )
+        await session.commit()
+    if owns_database:
+        await target.dispose()
+    return assigned_role
+
+
 async def async_main() -> None:
     args = parse_args()
     if args.command == "migrate-sqlite-analysis":
         imported = await migrate_sqlite_analysis(args.source)
         print(f"Imported {imported} analysis runs")
+    elif args.command == "set-platform-role":
+        role = await assign_platform_role(
+            args.email,
+            args.role,
+            reason=args.reason,
+        )
+        print(f"Platform role is now {role or 'none'}")
 
 
 def main() -> None:

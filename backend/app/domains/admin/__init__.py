@@ -1,0 +1,1 @@
+"""Controlled platform administration domain."""

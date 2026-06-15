@@ -14,6 +14,7 @@ from .core.logging import configure_secure_logging
 from .core.security import SecurityMiddleware
 from .database import get_history_run, list_history_runs, save_analysis_run
 from .domains.accounting.router import router as accounting_router
+from .domains.admin.router import router as platform_admin_router
 from .domains.api_keys.router import authentication_router as api_key_authentication_router
 from .domains.api_keys.router import management_router as api_key_management_router
 from .domains.applications.router import router as applications_router
@@ -104,6 +105,7 @@ app.include_router(api_key_management_router, prefix=settings.api_v1_prefix)
 app.include_router(api_key_authentication_router, prefix=settings.api_v1_prefix)
 app.include_router(organizations_router, prefix=settings.api_v1_prefix)
 app.include_router(accounting_router, prefix=settings.api_v1_prefix)
+app.include_router(platform_admin_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
