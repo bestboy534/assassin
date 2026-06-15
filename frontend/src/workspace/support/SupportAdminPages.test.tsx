@@ -192,9 +192,10 @@ afterEach(() => {
 
 test("客户可以浏览、新建并回复支持工单", async () => {
   const user = userEvent.setup();
-  renderRoute("/app/acme/support");
+  const listView = renderRoute("/app/acme/support");
   expect(await screen.findByRole("heading", { name: "支持工单" })).toBeVisible();
-  expect(screen.getByText("身份目录同步失败")).toBeVisible();
+  expect(await screen.findByText("身份目录同步失败")).toBeVisible();
+  listView.unmount();
 
   renderRoute("/app/acme/support/new");
   await user.type(await screen.findByLabelText("问题标题"), "新的同步问题");
@@ -211,6 +212,7 @@ test("客户可以创建限时诊断授权", async () => {
   const user = userEvent.setup();
   renderRoute("/app/acme/settings/support-access");
   expect(await screen.findByRole("heading", { name: "支持访问授权" })).toBeVisible();
+  await screen.findByRole("option", { name: "支持专员" });
   await user.selectOptions(screen.getByLabelText("支持专员"), "support-1");
   await user.type(screen.getByLabelText("授权原因"), "排查身份目录同步错误");
   await user.click(screen.getByRole("button", { name: "创建限时授权" }));

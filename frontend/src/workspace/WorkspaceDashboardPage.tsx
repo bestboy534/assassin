@@ -60,6 +60,7 @@ export const workspaceNav = [
   ["发票会计", "invoices"],
   ["集成中心", "integrations"],
   ["报表", "reports"],
+  ["支持中心", "support"],
   ["审计日志", "security/audit-log"],
   ["合规控制", "security/compliance"],
   ["安全事件", "security/incidents"],
@@ -67,6 +68,7 @@ export const workspaceNav = [
   ["API 密钥", "settings/api-keys"],
   ["Webhook", "settings/webhooks"],
   ["账单与套餐", "settings/billing"],
+  ["支持访问授权", "settings/support-access"],
 ] as const;
 
 export type WorkspaceState =
@@ -143,7 +145,10 @@ export function WorkspaceShell({
     currentOrganization.role,
   );
   const visibleNav = workspaceNav.filter(
-    ([, path]) => path !== "settings/billing" || canManageBilling,
+    ([, path]) =>
+      (path !== "settings/billing" || canManageBilling) &&
+      (path !== "settings/support-access" ||
+        ["owner", "admin"].includes(currentOrganization.role)),
   );
 
   return (

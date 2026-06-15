@@ -25,6 +25,8 @@ import {
   ComplianceWorkspacePage,
 } from "../workspace/ComplianceWorkspacePage";
 import { BillingWorkspacePage } from "../workspace/billing/BillingWorkspacePage";
+import { SupportWorkspacePage } from "../workspace/support/SupportWorkspacePage";
+import { AdminConsolePage } from "../admin/AdminConsolePage";
 import {
   legacyHashPaths,
   publicPages,
@@ -115,8 +117,28 @@ export const routes: RouteObject[] = [
     path: "/app/:organizationSlug/settings/billing/invoices",
     element: <BillingWorkspacePage section="invoices" />,
   },
+  {
+    path: "/app/:organizationSlug/support",
+    element: <SupportWorkspacePage mode="list" />,
+  },
+  {
+    path: "/app/:organizationSlug/support/new",
+    element: <SupportWorkspacePage mode="new" />,
+  },
+  {
+    path: "/app/:organizationSlug/support/:ticketId",
+    element: <SupportWorkspacePage mode="detail" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/support-access",
+    element: <SupportWorkspacePage mode="access" />,
+  },
   { path: "/app/:organizationSlug/:section", element: <WorkspaceSectionPage /> },
   { path: "/account/privacy", element: <AccountPrivacyPage /> },
+  { path: "/admin", element: <AdminConsolePage section="operations" /> },
+  { path: "/admin/support", element: <AdminConsolePage section="support" /> },
+  { path: "/admin/status", element: <AdminConsolePage section="status" /> },
+  { path: "/admin/catalog", element: <AdminConsolePage section="catalog" /> },
   {
     element: <MarketingLayout />,
     children: [

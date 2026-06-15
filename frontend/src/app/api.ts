@@ -2504,3 +2504,65 @@ export function createAdminKnowledge(
     body: JSON.stringify(input),
   });
 }
+
+export function createAdminKnowledgeDraft(
+  entryId: string,
+  input: { data: Record<string, unknown>; change_summary: string },
+) {
+  return request<KnowledgeBundle["version"]>(
+    `/api/v1/admin/knowledge/${entryId}/drafts`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function submitAdminKnowledgeReview(versionId: string) {
+  return request<KnowledgeBundle["version"]>(
+    `/api/v1/admin/knowledge/versions/${versionId}/submit-review`,
+    { method: "POST" },
+  );
+}
+
+export function approveAdminKnowledgeVersion(versionId: string) {
+  return request<KnowledgeBundle["version"]>(
+    `/api/v1/admin/knowledge/versions/${versionId}/approve`,
+    { method: "POST" },
+  );
+}
+
+export function publishAdminKnowledgeVersion(
+  versionId: string,
+  reason: string,
+  password: string,
+) {
+  return request<KnowledgeBundle>(
+    `/api/v1/admin/knowledge/versions/${versionId}/publish`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        reason,
+        reauth_confirmed: true,
+        reauth_password: password,
+      }),
+    },
+  );
+}
+
+export function rollbackAdminKnowledge(
+  entryId: string,
+  targetVersion: number,
+  reason: string,
+  password: string,
+) {
+  return request<KnowledgeBundle>(
+    `/api/v1/admin/knowledge/${entryId}/rollback`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        target_version: targetVersion,
+        reason,
+        reauth_confirmed: true,
+        reauth_password: password,
+      }),
+    },
+  );
+}
