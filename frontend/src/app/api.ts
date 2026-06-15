@@ -19,6 +19,73 @@ export type AuthSession = {
   organizations: OrganizationSummary[];
 };
 
+export type BillingEntitlement = {
+  key: string;
+  value_type: string;
+  value: boolean | number | string;
+  hard_limit: boolean;
+};
+
+export type BillingPlan = {
+  key: string;
+  name: string;
+  description: string;
+  currency: string;
+  billing_interval: string;
+  amount_minor: number;
+  entitlements: BillingEntitlement[];
+};
+
+export type BillingSubscription = {
+  status: string;
+  read_only: boolean;
+  trial_ends_at: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  pending_change_at: string | null;
+  pending_change_type: string | null;
+};
+
+export type BillingSummary = {
+  plan: BillingPlan;
+  subscription: BillingSubscription;
+  pending_plan: BillingPlan | null;
+  payment_issue: boolean;
+};
+
+export type BillingUsageMetric = {
+  metric: string;
+  current_value: number;
+  limit: number;
+  hard_limit: boolean;
+  status: string;
+};
+
+export type BillingInvoice = {
+  external_invoice_id: string;
+  status: string;
+  currency: string;
+  amount_due_minor: number;
+  amount_paid_minor: number;
+  hosted_invoice_url: string | null;
+  due_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+};
+
+export type BillingChangePreview = {
+  current_plan: string;
+  target_plan: string;
+  direction: "upgrade" | "downgrade";
+  effective_at: string;
+  current_amount_minor: number;
+  target_amount_minor: number;
+  proration_minor: number;
+  lost_features: string[];
+  over_limit: Record<string, number>;
+};
+
 export type ApplicationItem = {
   id: string;
   organization_id: string;
@@ -568,10 +635,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     },
   });
   if (!response.ok) {
-    let message = `请求失败：${response.status}`;
+    let message = `请求失败（${response.status}）`;
     try {
       const body = await response.json();
-      message = typeof body.detail === "string" ? body.detail : message;
+      if (typeof body.detail === "string") {
+        message = body.detail;
+      } else if (body.detail?.code === "entitlement_exceeded") {
+        message = `当前套餐额度已用尽（上限 ${body.detail.limit}）。请升级套餐后继续。`;
+      }
     } catch {
       message = (await response.text()) || message;
     }
@@ -2015,5 +2086,80 @@ export function retryWebhookDelivery(
   return request<WebhookDeliveryItem>(
     `/api/v1/organizations/${organizationId}/webhooks/${endpointId}/deliveries/${deliveryId}/retry`,
     { method: "POST" },
+  );
+}
+
+export function listBillingPlans() {
+  return request<{ items: BillingPlan[] }>("/api/v1/billing/plans");
+}
+
+export function getBillingSummary(organizationId: string) {
+  return request<BillingSummary>(
+    `/api/v1/organizations/${organizationId}/billing`,
+  );
+}
+
+export function getBillingUsage(organizationId: string) {
+  return request<{ items: BillingUsageMetric[] }>(
+    `/api/v1/organizations/${organizationId}/billing/usage`,
+  );
+}
+
+export function listBillingInvoices(organizationId: string) {
+  return request<{ items: BillingInvoice[] }>(
+    `/api/v1/organizations/${organizationId}/billing/invoices`,
+  );
+}
+
+export function previewBillingChange(
+  organizationId: string,
+  targetPlan: string,
+) {
+  return request<BillingChangePreview>(
+    `/api/v1/organizations/${organizationId}/billing/change-preview`,
+    {
+      method: "POST",
+      body: JSON.stringify({ target_plan: targetPlan }),
+    },
+  );
+}
+
+export function changeBillingPlan(
+  organizationId: string,
+  targetPlan: string,
+) {
+  return request<BillingSummary>(
+    `/api/v1/organizations/${organizationId}/billing/change-plan`,
+    {
+      method: "POST",
+      body: JSON.stringify({ target_plan: targetPlan }),
+    },
+  );
+}
+
+export function cancelBillingSubscription(organizationId: string) {
+  return request<BillingSummary>(
+    `/api/v1/organizations/${organizationId}/billing/cancel`,
+    { method: "POST" },
+  );
+}
+
+export function undoBillingCancellation(organizationId: string) {
+  return request<BillingSummary>(
+    `/api/v1/organizations/${organizationId}/billing/undo-cancellation`,
+    { method: "POST" },
+  );
+}
+
+export function createBillingPortalSession(
+  organizationId: string,
+  returnUrl: string,
+) {
+  return request<{ url: string }>(
+    `/api/v1/organizations/${organizationId}/billing/portal-session`,
+    {
+      method: "POST",
+      body: JSON.stringify({ return_url: returnUrl }),
+    },
   );
 }

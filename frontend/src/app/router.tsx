@@ -14,6 +14,7 @@ import { GenericSolutionPage } from "../marketing/pages/GenericSolutionPage";
 import { HomePage } from "../marketing/pages/HomePage";
 import { LegalPage } from "../marketing/pages/LegalPage";
 import { NotFoundPage } from "../marketing/pages/NotFoundPage";
+import { PricingPage } from "../marketing/pages/PricingPage";
 import { ReportPage } from "../marketing/pages/ReportPage";
 import { SecurityPage } from "../marketing/pages/SecurityPage";
 import { SupportMetricsPage } from "../marketing/pages/SupportMetricsPage";
@@ -22,6 +23,7 @@ import {
   AccountPrivacyPage,
   ComplianceWorkspacePage,
 } from "../workspace/ComplianceWorkspacePage";
+import { BillingWorkspacePage } from "../workspace/billing/BillingWorkspacePage";
 import {
   legacyHashPaths,
   publicPages,
@@ -33,6 +35,7 @@ function pageElement(page: PublicPage): ReactElement {
   if (page.id === "cambridge") return <CambridgePage />;
   if (page.id === "login") return <AuthPage mode="login" />;
   if (page.id === "signup") return <AuthPage mode="signup" />;
+  if (page.id === "pricing") return <PricingPage />;
 
   switch (page.kind) {
     case "directory":
@@ -98,6 +101,18 @@ export const routes: RouteObject[] = [
   {
     path: "/app/:organizationSlug/settings/webhooks",
     element: <ComplianceWorkspacePage section="webhooks" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/billing",
+    element: <BillingWorkspacePage section="overview" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/billing/usage",
+    element: <BillingWorkspacePage section="usage" />,
+  },
+  {
+    path: "/app/:organizationSlug/settings/billing/invoices",
+    element: <BillingWorkspacePage section="invoices" />,
   },
   { path: "/app/:organizationSlug/:section", element: <WorkspaceSectionPage /> },
   { path: "/account/privacy", element: <AccountPrivacyPage /> },

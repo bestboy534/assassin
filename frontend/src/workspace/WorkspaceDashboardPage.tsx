@@ -66,6 +66,7 @@ export const workspaceNav = [
   ["数据保留", "settings/data-retention"],
   ["API 密钥", "settings/api-keys"],
   ["Webhook", "settings/webhooks"],
+  ["账单与套餐", "settings/billing"],
 ] as const;
 
 export type WorkspaceState =
@@ -138,6 +139,12 @@ export function WorkspaceShell({
   currentOrganization: OrganizationSummary;
 }) {
   const basePath = `/app/${currentOrganization.slug}`;
+  const canManageBilling = ["owner", "admin", "finance", "finance_admin"].includes(
+    currentOrganization.role,
+  );
+  const visibleNav = workspaceNav.filter(
+    ([, path]) => path !== "settings/billing" || canManageBilling,
+  );
 
   return (
     <main className="workspace-shell">
@@ -147,7 +154,7 @@ export function WorkspaceShell({
           <strong>工作台</strong>
         </Link>
         <nav>
-          {workspaceNav.map(([label, path]) => (
+          {visibleNav.map(([label, path]) => (
             <Link
               aria-current={path === activeSection ? "page" : undefined}
               key={path}
@@ -230,7 +237,10 @@ export function WorkspaceSectionPage() {
         activeSection="applications"
         currentOrganization={workspace.currentOrganization}
       >
-        <ApplicationCatalogSection organizationId={workspace.currentOrganization.id} />
+        <ApplicationCatalogSection
+          organizationId={workspace.currentOrganization.id}
+          organizationSlug={workspace.currentOrganization.slug}
+        />
       </WorkspaceShell>
     );
   }
@@ -340,7 +350,13 @@ export function WorkspaceSectionPage() {
   );
 }
 
-function ApplicationCatalogSection({ organizationId }: { organizationId: string }) {
+function ApplicationCatalogSection({
+  organizationId,
+  organizationSlug,
+}: {
+  organizationId: string;
+  organizationSlug: string;
+}) {
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -445,7 +461,16 @@ function ApplicationCatalogSection({ organizationId }: { organizationId: string 
         </button>
       </form>
 
-      {error && <p className="workspace-inline-error">{error}</p>}
+      {error ? (
+        <div className="workspace-inline-error">
+          <p>{error}</p>
+          {error.includes("套餐额度") ? (
+            <Link to={`/app/${organizationSlug}/settings/billing`}>
+              查看套餐与升级
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
 
       <ApplicationCatalogTable applications={applications} loading={loading} />
     </section>

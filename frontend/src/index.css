@@ -2,3 +2,4 @@
 @import "./shared/styles/base.css";
 @import "./marketing/styles/marketing.css";
 @import "./workspace/compliance.css";
+@import "./workspace/billing/billing.css";

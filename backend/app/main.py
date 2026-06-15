@@ -18,6 +18,8 @@ from .domains.api_keys.router import authentication_router as api_key_authentica
 from .domains.api_keys.router import management_router as api_key_management_router
 from .domains.applications.router import router as applications_router
 from .domains.audit_ai.router import router as billing_audit_router
+from .domains.billing.router import management_router as billing_management_router
+from .domains.billing.router import public_router as billing_public_router
 from .domains.billing.router import webhook_router as billing_webhook_router
 from .domains.compliance.control_router import controls_router, incidents_router
 from .domains.compliance.router import audit_logs_router, privacy_router, retention_router
@@ -99,6 +101,8 @@ app.include_router(accounting_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_audit_router, prefix=settings.api_v1_prefix)
+app.include_router(billing_public_router, prefix=settings.api_v1_prefix)
+app.include_router(billing_management_router, prefix=settings.api_v1_prefix)
 app.include_router(billing_webhook_router, prefix=settings.api_v1_prefix)
 app.include_router(purchase_requests_router, prefix=settings.api_v1_prefix)
 app.include_router(approval_tasks_router, prefix=settings.api_v1_prefix)
