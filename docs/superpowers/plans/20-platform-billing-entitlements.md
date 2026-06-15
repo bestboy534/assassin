@@ -186,7 +186,7 @@ git commit -m "feat: meter organization product usage"
 
 ## Task 6: 前端定价与账单设置
 
-- [ ] **Step 1: 页面**
+- [x] **Step 1: 页面**
 
 ```text
 /pricing
@@ -195,19 +195,19 @@ git commit -m "feat: meter organization product usage"
 /app/:org/settings/billing/invoices
 ```
 
-- [ ] **Step 2: 账单页面**
+- [x] **Step 2: 账单页面**
 
 套餐、状态、续费日期、用量、发票、付款失败、升级/降级预览和账单门户。
 
-- [ ] **Step 3: 权益 UI**
+- [x] **Step 3: 权益 UI**
 
 受限功能展示套餐要求和升级入口；API 返回 entitlement error 时显示同一说明。
 
-- [ ] **Step 4: E2E**
+- [x] **Step 4: E2E**
 
 试用 -> 升级 sandbox -> Webhook active -> 达到用量阈值 -> 降级预览 -> 周期末降级 -> 取消撤销。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add frontend/src/workspace/billing frontend/src/marketing/pages/PricingPage.tsx
@@ -221,4 +221,4 @@ git commit -m "feat: add customer billing experience"
 - [x] 旧 Webhook 不能覆盖新状态。
 - [x] 试用到期不删除数据。
 - [x] 降级前显示影响，不静默删除。
-- [ ] 账单入口仅组织 owner/有权限角色可见。
+- [x] 账单入口仅组织 owner/有权限角色可见。
