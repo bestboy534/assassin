@@ -59,6 +59,20 @@ class SupportMessageResponse(BaseModel):
     created_at: datetime
 
 
+class SupportMessageListResponse(BaseModel):
+    items: list[SupportMessageResponse]
+
+
+class SupportAgentResponse(BaseModel):
+    id: UUID
+    display_name: str
+    platform_role: str
+
+
+class SupportAgentListResponse(BaseModel):
+    items: list[SupportAgentResponse]
+
+
 class CreateSupportSatisfactionRequest(BaseModel):
     rating: int = Field(ge=1, le=5)
     comment: str = Field(default="", max_length=1000)

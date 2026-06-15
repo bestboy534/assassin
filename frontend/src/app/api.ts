@@ -15,6 +15,7 @@ export type AuthSession = {
     email: string;
     display_name: string;
     status: string;
+    platform_role?: string | null;
   };
   organizations: OrganizationSummary[];
 };
@@ -2208,5 +2209,298 @@ export function subscribeToStatus(email: string) {
   return request<{ status: string }>("/api/v1/status/subscriptions", {
     method: "POST",
     body: JSON.stringify({ email }),
+  });
+}
+
+export type SupportTicketItem = {
+  id: string;
+  organization_id: string;
+  subject: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  support_tier: string;
+  resolution_summary: string | null;
+  first_response_due_at: string;
+  resolution_due_at: string;
+  first_responded_at: string | null;
+  sla_paused_at: string | null;
+  resolved_at: string | null;
+  closed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupportMessageItem = {
+  id: string;
+  support_ticket_id: string;
+  author_type: string;
+  body: string;
+  internal: boolean;
+  created_at: string;
+};
+
+export type SupportAgentItem = {
+  id: string;
+  display_name: string;
+  platform_role: string;
+};
+
+export type SupportGrantItem = {
+  id: string;
+  organization_id: string;
+  support_user_id: string;
+  scopes: string[];
+  reason: string;
+  approved_by_user_id: string;
+  expires_at: string;
+  revoked_at: string | null;
+  created_at: string;
+};
+
+export type SupportDiagnosticItem = {
+  id: string;
+  connection_id: string;
+  resource_type: string;
+  status: string;
+  failed_count: number;
+  attempts: number;
+  error_summary: string | null;
+  started_at: string;
+  finished_at: string | null;
+};
+
+export function listSupportTickets(organizationId: string) {
+  return request<{ items: SupportTicketItem[] }>(
+    `/api/v1/support/tickets?organization_id=${encodeURIComponent(organizationId)}`,
+  );
+}
+
+export function createSupportTicket(input: {
+  organization_id: string;
+  subject: string;
+  description: string;
+  category: string;
+  priority: string;
+}) {
+  return request<SupportTicketItem>("/api/v1/support/tickets", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getSupportTicket(ticketId: string) {
+  return request<SupportTicketItem>(`/api/v1/support/tickets/${ticketId}`);
+}
+
+export function listSupportMessages(ticketId: string) {
+  return request<{ items: SupportMessageItem[] }>(
+    `/api/v1/support/tickets/${ticketId}/messages`,
+  );
+}
+
+export function createCustomerSupportMessage(ticketId: string, body: string) {
+  return request<SupportMessageItem>(
+    `/api/v1/support/tickets/${ticketId}/messages`,
+    { method: "POST", body: JSON.stringify({ body }) },
+  );
+}
+
+export function listSupportAgents() {
+  return request<{ items: SupportAgentItem[] }>("/api/v1/support/agents");
+}
+
+export function listSupportGrants(organizationId: string) {
+  return request<{ items: SupportGrantItem[] }>(
+    `/api/v1/organizations/${organizationId}/support-grants`,
+  );
+}
+
+export function createSupportGrant(
+  organizationId: string,
+  input: {
+    support_user_id: string;
+    scopes: string[];
+    reason: string;
+    expires_at: string;
+  },
+) {
+  return request<SupportGrantItem>(
+    `/api/v1/organizations/${organizationId}/support-grants`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function revokeSupportGrant(organizationId: string, grantId: string) {
+  return request<SupportGrantItem>(
+    `/api/v1/organizations/${organizationId}/support-grants/${grantId}/revoke`,
+    { method: "POST" },
+  );
+}
+
+export function listOperationalTickets() {
+  return request<{ items: SupportTicketItem[] }>(
+    "/api/v1/support/operations/tickets",
+  );
+}
+
+export function listOperationalMessages(ticketId: string) {
+  return request<{ items: SupportMessageItem[] }>(
+    `/api/v1/support/operations/tickets/${ticketId}/messages`,
+  );
+}
+
+export function createOperationalMessage(ticketId: string, body: string) {
+  return request<SupportMessageItem>(
+    `/api/v1/support/operations/tickets/${ticketId}/messages`,
+    { method: "POST", body: JSON.stringify({ body }) },
+  );
+}
+
+export function listOperationalGrants() {
+  return request<{ items: SupportGrantItem[] }>(
+    "/api/v1/support/operations/grants",
+  );
+}
+
+export function readSupportDiagnostics(grantId: string, purpose: string) {
+  return request<{
+    grant_id: string;
+    organization_id: string;
+    items: SupportDiagnosticItem[];
+  }>(`/api/v1/support/grants/${grantId}/diagnostics`, {
+    method: "POST",
+    body: JSON.stringify({ purpose }),
+  });
+}
+
+export type AdminStatusComponent = PublicStatusComponent;
+
+export type AdminStatusIncident = {
+  id: string;
+  component_id: string;
+  title: string;
+  public_summary: string;
+  internal_summary: string;
+  impact: string;
+  status: string;
+  started_at: string;
+  resolved_at: string | null;
+};
+
+export function listAdminStatusComponents() {
+  return request<AdminStatusComponent[]>("/api/v1/admin/status/components");
+}
+
+export function createAdminStatusComponent(input: {
+  slug: string;
+  name: string;
+  description: string;
+  display_order: number;
+}) {
+  return request<AdminStatusComponent>("/api/v1/admin/status/components", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createAdminStatusIncident(input: {
+  component_id: string;
+  title: string;
+  public_summary: string;
+  internal_summary: string;
+  impact: string;
+  public_message: string;
+  internal_note: string;
+}) {
+  return request<AdminStatusIncident>("/api/v1/admin/status/incidents", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export type AdminOrganizationItem = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  member_count: number;
+  plan_key: string | null;
+  created_at: string;
+};
+
+export type AdminUserItem = {
+  id: string;
+  email: string;
+  display_name: string;
+  status: string;
+  platform_role: string | null;
+  created_at: string;
+};
+
+export function listAdminOrganizations() {
+  return request<{ items: AdminOrganizationItem[] }>("/api/v1/admin/organizations");
+}
+
+export function listAdminUsers() {
+  return request<{ items: AdminUserItem[] }>("/api/v1/admin/users");
+}
+
+export function runHighRiskAdminAction(
+  path: string,
+  reason: string,
+  password: string,
+) {
+  return request<{ id: string; status: string }>(path, {
+    method: "POST",
+    body: JSON.stringify({
+      reason,
+      reauth_confirmed: true,
+      reauth_password: password,
+    }),
+  });
+}
+
+export type KnowledgeBundle = {
+  entry: {
+    id: string;
+    object_type: string;
+    key: string;
+    status: string;
+    published_version_number: number | null;
+    created_at: string;
+  };
+  version: {
+    id: string;
+    entry_id: string;
+    version_number: number;
+    status: string;
+    data: Record<string, unknown>;
+    change_summary: string;
+    created_by_user_id: string;
+    reviewed_by_user_id: string | null;
+    published_by_user_id: string | null;
+    created_at: string;
+    reviewed_at: string | null;
+    published_at: string | null;
+  };
+};
+
+export function listAdminKnowledge(collection: string) {
+  return request<{ items: KnowledgeBundle[] }>(`/api/v1/admin/${collection}`);
+}
+
+export function createAdminKnowledge(
+  collection: string,
+  input: {
+    key: string;
+    data: Record<string, unknown>;
+    change_summary: string;
+  },
+) {
+  return request<KnowledgeBundle>(`/api/v1/admin/${collection}`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }

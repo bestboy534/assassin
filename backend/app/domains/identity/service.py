@@ -187,4 +187,5 @@ def user_response(user: User) -> UserResponse:
         email=user.email_normalized,
         display_name=user.display_name,
         status=user.status,
+        platform_role=user.platform_role,
     )

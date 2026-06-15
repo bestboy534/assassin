@@ -2,6 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -13,6 +14,7 @@ from app.domains.organizations.service import (
     OrganizationService,
 )
 
+from .models import SupportGrant
 from .schemas import (
     CreateSupportGrantRequest,
     CreateSupportMessageRequest,
@@ -20,9 +22,12 @@ from .schemas import (
     CreateSupportTicketRequest,
     DiagnosticAccessRequest,
     ResolveSupportTicketRequest,
+    SupportAgentListResponse,
+    SupportAgentResponse,
     SupportDiagnosticResponse,
     SupportGrantListResponse,
     SupportGrantResponse,
+    SupportMessageListResponse,
     SupportMessageResponse,
     SupportSatisfactionResponse,
     SupportTicketListResponse,
@@ -44,6 +49,8 @@ grant_management_router = APIRouter(
     tags=["support"],
 )
 grant_access_router = APIRouter(prefix="/support/grants", tags=["support"])
+operations_router = APIRouter(prefix="/support/operations", tags=["support-operations"])
+agents_router = APIRouter(prefix="/support/agents", tags=["support"])
 
 
 async def organization_context(
@@ -55,6 +62,17 @@ async def organization_context(
         return await OrganizationService(session).get_context(user.id, organization_id)
     except OrganizationNotFound as exc:
         raise HTTPException(status_code=404, detail="Organization not found") from exc
+
+
+async def require_support_operator(
+    user: Annotated[User, Depends(require_user)],
+) -> User:
+    if user.platform_role not in {"support_agent", "platform_admin"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Support operations forbidden",
+        )
+    return user
 
 
 @ticket_router.post(
@@ -94,6 +112,23 @@ async def get_support_ticket(
     except SupportTicketNotFound as exc:
         raise HTTPException(status_code=404, detail="Support ticket not found") from exc
     return SupportTicketService.ticket_response(ticket)
+
+
+@ticket_router.get(
+    "/{ticket_id}/messages",
+    response_model=SupportMessageListResponse,
+)
+async def list_customer_support_messages(
+    ticket_id: UUID,
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportMessageListResponse:
+    service = SupportTicketService(session)
+    try:
+        ticket = await service.get_for_user(ticket_id, user.id)
+    except SupportTicketNotFound as exc:
+        raise HTTPException(status_code=404, detail="Support ticket not found") from exc
+    return await service.messages(ticket, include_internal=False)
 
 
 @ticket_router.patch("/{ticket_id}", response_model=SupportTicketResponse)
@@ -253,3 +288,99 @@ async def read_support_diagnostics(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     await session.commit()
     return response
+
+
+@agents_router.get("", response_model=SupportAgentListResponse)
+async def list_support_agents(
+    user: Annotated[User, Depends(require_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportAgentListResponse:
+    del user
+    agents = list(
+        (
+            await session.scalars(
+                select(User)
+                .where(User.platform_role.in_({"support_agent", "platform_admin"}))
+                .order_by(User.display_name, User.email_normalized)
+            )
+        ).all()
+    )
+    return SupportAgentListResponse(
+        items=[
+            SupportAgentResponse(
+                id=agent.id,
+                display_name=agent.display_name,
+                platform_role=agent.platform_role or "support_agent",
+            )
+            for agent in agents
+        ]
+    )
+
+
+@operations_router.get("/tickets", response_model=SupportTicketListResponse)
+async def list_operational_tickets(
+    operator: Annotated[User, Depends(require_support_operator)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportTicketListResponse:
+    del operator
+    return await SupportTicketService(session).list_for_operator()
+
+
+@operations_router.get(
+    "/tickets/{ticket_id}/messages",
+    response_model=SupportMessageListResponse,
+)
+async def list_operational_ticket_messages(
+    ticket_id: UUID,
+    operator: Annotated[User, Depends(require_support_operator)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportMessageListResponse:
+    del operator
+    service = SupportTicketService(session)
+    try:
+        ticket = await service.get_for_operator(ticket_id)
+    except SupportTicketNotFound as exc:
+        raise HTTPException(status_code=404, detail="Support ticket not found") from exc
+    return await service.messages(ticket, include_internal=True)
+
+
+@operations_router.post(
+    "/tickets/{ticket_id}/messages",
+    response_model=SupportMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_operational_ticket_message(
+    ticket_id: UUID,
+    body: CreateSupportMessageRequest,
+    operator: Annotated[User, Depends(require_support_operator)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportMessageResponse:
+    service = SupportTicketService(session)
+    try:
+        ticket = await service.get_for_operator(ticket_id)
+        response = await service.add_support_message(ticket, operator, body.body)
+    except SupportTicketNotFound as exc:
+        raise HTTPException(status_code=404, detail="Support ticket not found") from exc
+    except InvalidSupportOperation as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    await session.commit()
+    return response
+
+
+@operations_router.get("/grants", response_model=SupportGrantListResponse)
+async def list_operational_grants(
+    operator: Annotated[User, Depends(require_support_operator)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SupportGrantListResponse:
+    grants = list(
+        (
+            await session.scalars(
+                select(SupportGrant)
+                .where(SupportGrant.support_user_id == operator.id)
+                .order_by(SupportGrant.created_at.desc())
+            )
+        ).all()
+    )
+    return SupportGrantListResponse(
+        items=[SupportGrantService.response(grant) for grant in grants]
+    )

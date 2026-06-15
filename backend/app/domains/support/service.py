@@ -30,6 +30,7 @@ from .schemas import (
     SupportDiagnosticResponse,
     SupportGrantListResponse,
     SupportGrantResponse,
+    SupportMessageListResponse,
     SupportMessageResponse,
     SupportSatisfactionResponse,
     SupportTicketListResponse,
@@ -172,6 +173,42 @@ class SupportTicketService:
             raise SupportTicketNotFound
         return ticket
 
+    async def get_for_operator(self, ticket_id: UUID) -> SupportTicket:
+        ticket = await self.session.get(SupportTicket, ticket_id)
+        if ticket is None:
+            raise SupportTicketNotFound
+        return ticket
+
+    async def list_for_operator(self) -> SupportTicketListResponse:
+        tickets = list(
+            (
+                await self.session.scalars(
+                    select(SupportTicket).order_by(SupportTicket.created_at.desc())
+                )
+            ).all()
+        )
+        return SupportTicketListResponse(
+            items=[self.ticket_response(ticket) for ticket in tickets]
+        )
+
+    async def messages(
+        self,
+        ticket: SupportTicket,
+        *,
+        include_internal: bool,
+    ) -> SupportMessageListResponse:
+        statement = (
+            select(SupportMessage)
+            .where(SupportMessage.support_ticket_id == ticket.id)
+            .order_by(SupportMessage.created_at, SupportMessage.id)
+        )
+        if not include_internal:
+            statement = statement.where(SupportMessage.internal.is_(False))
+        messages = list((await self.session.scalars(statement)).all())
+        return SupportMessageListResponse(
+            items=[self.message_response(message) for message in messages]
+        )
+
     async def add_customer_message(
         self,
         ticket: SupportTicket,
@@ -180,6 +217,7 @@ class SupportTicketService:
     ) -> SupportMessageResponse:
         if ticket.status in {"resolved", "closed"}:
             raise InvalidSupportOperation("Resolved ticket cannot receive new messages")
+        current_time = datetime.now(UTC)
         message = SupportMessage(
             organization_id=ticket.organization_id,
             support_ticket_id=ticket.id,
@@ -187,14 +225,63 @@ class SupportTicketService:
             author_type="customer",
             body=body.strip(),
             internal=False,
+            created_at=current_time,
         )
         async with transaction(self.session):
             self.session.add(message)
             if ticket.status in {"new", "waiting_customer"}:
                 self._resume_sla(ticket)
                 ticket.status = "waiting_support"
-                ticket.updated_at = datetime.now(UTC)
+                ticket.updated_at = current_time
             await self.session.flush()
+        return self.message_response(message)
+
+    async def add_support_message(
+        self,
+        ticket: SupportTicket,
+        user: User,
+        body: str,
+    ) -> SupportMessageResponse:
+        if ticket.status in {"resolved", "closed"}:
+            raise InvalidSupportOperation("Resolved ticket cannot receive new messages")
+        current_time = datetime.now(UTC)
+        message = SupportMessage(
+            organization_id=ticket.organization_id,
+            support_ticket_id=ticket.id,
+            author_user_id=user.id,
+            author_type="support",
+            body=body.strip(),
+            internal=False,
+            created_at=current_time,
+        )
+        async with transaction(self.session):
+            self.session.add(message)
+            if ticket.first_responded_at is None:
+                ticket.first_responded_at = current_time
+            ticket.status = "waiting_customer"
+            ticket.sla_paused_at = ticket.sla_paused_at or current_time
+            ticket.updated_at = current_time
+            await self.session.flush()
+            await ComplianceService(self.session).record_audit_log(
+                AuditLogCreate(
+                    organization_id=ticket.organization_id,
+                    actor_type="support_user",
+                    actor_id=user.id,
+                    action="support.message_created",
+                    resource_type="support_ticket",
+                    resource_id=str(ticket.id),
+                )
+            )
+            await self.outbox.add(
+                "support.message_created",
+                message.id,
+                {
+                    "ticket_id": str(ticket.id),
+                    "organization_id": str(ticket.organization_id),
+                    "message_id": str(message.id),
+                },
+                organization_id=ticket.organization_id,
+            )
         return self.message_response(message)
 
     async def update_status(

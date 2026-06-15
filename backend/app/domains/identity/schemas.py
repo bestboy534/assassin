@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     email: str
     display_name: str
     status: str
+    platform_role: str | None
 
 
 class OrganizationSummary(BaseModel):
