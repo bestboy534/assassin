@@ -79,12 +79,19 @@ def test_migrations_upgrade_empty_database(tmp_path: Path) -> None:
         "organization_entitlements",
         "usage_counters",
         "usage_events",
-        "billing_customers",
-        "billing_invoices",
-    } <= tables
+            "billing_customers",
+            "billing_invoices",
+            "support_tickets",
+            "support_messages",
+            "support_attachments",
+            "support_sla_events",
+            "support_satisfaction",
+            "support_grants",
+            "support_access_logs",
+        } <= tables
     assert {
         "pending_plan_id",
         "pending_change_at",
         "pending_change_type",
     } <= subscription_columns
-    assert version == ("20260613_0020",)
+    assert version == ("20260615_0021",)

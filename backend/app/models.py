@@ -87,6 +87,15 @@ from .domains.spend.models import (
     TransactionAnomaly,
     TransactionSplit,
 )
+from .domains.support.models import (
+    SupportAccessLog,
+    SupportAttachment,
+    SupportGrant,
+    SupportMessage,
+    SupportSatisfaction,
+    SupportSlaEvent,
+    SupportTicket,
+)
 from .domains.vendors.models import RiskFinding, Vendor, VendorAlias, VendorRiskAssessment
 from .domains.webhooks.models import WebhookDelivery, WebhookEndpoint
 
@@ -163,6 +172,13 @@ __all__ = [
     "SavedReport",
     "StoredFile",
     "SpendTransaction",
+    "SupportAccessLog",
+    "SupportAttachment",
+    "SupportGrant",
+    "SupportMessage",
+    "SupportSatisfaction",
+    "SupportSlaEvent",
+    "SupportTicket",
     "SyncCursor",
     "SyncError",
     "SyncRun",

@@ -38,6 +38,11 @@ from .domains.procurement.router import (
 from .domains.reports.router import router as reports_router
 from .domains.savings.router import router as savings_router
 from .domains.spend.router import router as spend_router
+from .domains.support.router import grant_access_router as support_grant_access_router
+from .domains.support.router import (
+    grant_management_router as support_grant_management_router,
+)
+from .domains.support.router import ticket_router as support_ticket_router
 from .domains.vendors.router import risk_findings_router, vendors_router
 from .domains.webhooks.router import router as webhooks_router
 from .infrastructure.queue.client import JobQueue, build_queue
@@ -113,6 +118,9 @@ app.include_router(risk_findings_router, prefix=settings.api_v1_prefix)
 app.include_router(spend_router, prefix=settings.api_v1_prefix)
 app.include_router(savings_router, prefix=settings.api_v1_prefix)
 app.include_router(reports_router, prefix=settings.api_v1_prefix)
+app.include_router(support_ticket_router, prefix=settings.api_v1_prefix)
+app.include_router(support_grant_management_router, prefix=settings.api_v1_prefix)
+app.include_router(support_grant_access_router, prefix=settings.api_v1_prefix)
 app.include_router(audit_logs_router, prefix=settings.api_v1_prefix)
 app.include_router(retention_router, prefix=settings.api_v1_prefix)
 app.include_router(privacy_router, prefix=settings.api_v1_prefix)
