@@ -12,7 +12,7 @@
 
 ## Task 1: 支持工单
 
-- [ ] **Step 1: 写组织可见性测试**
+- [x] **Step 1: 写组织可见性测试**
 
 ```py
 async def test_support_ticket_is_visible_only_to_organization_and_support_role(client, ticket, other_org_user):
@@ -20,7 +20,7 @@ async def test_support_ticket_is_visible_only_to_organization_and_support_role(c
     assert response.status_code == 404
 ```
 
-- [ ] **Step 2: 创建模型**
+- [x] **Step 2: 创建模型**
 
 ```text
 support_tickets
@@ -32,7 +32,7 @@ support_satisfaction
 
 状态 new、open、waiting_customer、waiting_support、resolved、closed。
 
-- [ ] **Step 3: API**
+- [x] **Step 3: API**
 
 ```text
 GET/POST /support/tickets
@@ -42,11 +42,11 @@ POST /support/tickets/{id}/resolve
 POST /support/tickets/{id}/satisfaction
 ```
 
-- [ ] **Step 4: SLA**
+- [x] **Step 4: SLA**
 
 按套餐计算首次响应和解决目标，暂停等待客户时间；违约前通知支持负责人。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 python -m pytest app/domains/support/tests/test_tickets.py -q
@@ -56,7 +56,7 @@ git commit -m "feat: add customer support tickets"
 
 ## Task 2: 客户授权诊断
 
-- [ ] **Step 1: 写过期访问测试**
+- [x] **Step 1: 写过期访问测试**
 
 ```py
 async def test_expired_support_grant_blocks_diagnostic_access(support_access, expired_grant):
@@ -64,11 +64,11 @@ async def test_expired_support_grant_blocks_diagnostic_access(support_access, ex
         await support_access.read_sync_diagnostics(expired_grant.id)
 ```
 
-- [ ] **Step 2: Grant 模型**
+- [x] **Step 2: Grant 模型**
 
 包含 organization、support_user、scope、reason、approved_by、expires_at、revoked_at。
 
-- [ ] **Step 3: 范围**
+- [x] **Step 3: 范围**
 
 ```text
 configuration.read
@@ -79,11 +79,11 @@ business_records.read
 
 默认只允许前三类；业务记录必须单独授权。
 
-- [ ] **Step 4: 审计**
+- [x] **Step 4: 审计**
 
 每次使用 grant 记录访问资源和用途；客户可随时撤销。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 python -m pytest app/domains/support/tests/test_support_grants.py -q
@@ -236,4 +236,3 @@ git commit -m "feat: add customer support and admin operations"
 - [ ] 状态页不泄露内部细节。
 - [ ] 后台高风险操作需要重新认证。
 - [ ] 无任意 SQL 或无审计修复入口。
-
